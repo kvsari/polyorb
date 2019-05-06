@@ -1,7 +1,16 @@
 [package]
 name = "polyorb"
-version = "0.1.0"
+version = "0.0.0"
 authors = ["Stephan Luther <kvsari@gmail.com>"]
 edition = "2018"
 
+[[bin]]
+name = "polyorb_demo"
+path = "src/main.rs"
+
+[features]
+default = ["wgpu/vulkan"]
+
 [dependencies]
+wgpu = "0.2.3"
+log = "0.4.6"
