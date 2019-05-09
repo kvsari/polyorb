@@ -5,7 +5,10 @@
 use log::info;
 use wgpu::winit::{self, Event};
 
-pub mod cube;
+//pub mod cube;
+//pub mod space;
+
+pub mod cube_example;
 
 /// Platonic solid that is used as a base for the `GoldberPolyhedron`.
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
@@ -20,7 +23,7 @@ pub enum PlatonicSolid {
 /// Fully contained scene description.
 pub trait Scene {
     fn init(desc: &wgpu::SwapChainDescriptor, device: &mut wgpu::Device) -> Self;
-    // resize(&mut self, desc: &wgpu::SwapChainDescriptor, device: &mut wgpu::Device);
+    fn resize(&mut self, desc: &wgpu::SwapChainDescriptor, device: &mut wgpu::Device);
     fn update(&mut self, event: wgpu::winit::WindowEvent);
     fn render(&mut self, frame: &wgpu::SwapChainOutput, device: &mut wgpu::Device);
 }
