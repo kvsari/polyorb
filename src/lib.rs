@@ -1,12 +1,14 @@
 //! # Polyorb
 //!
 //! Render various Goldberg polyhedrons.
+use std::{path, io, fs};
 
 use log::info;
 use wgpu::winit::{self, Event};
+use shaderc::ShaderKind;
 
-//pub mod cube;
-//pub mod space;
+pub mod cube;
+pub mod space;
 
 pub mod cube_example;
 
@@ -18,6 +20,24 @@ pub enum PlatonicSolid {
     Octahedron,
     Dodecahedron,
     Icosahedron,
+}
+
+pub fn load_shader(
+    name: &str, entry: &str, kind: ShaderKind
+) -> Result<Vec<u8>, shaderc::Error> {
+    let mut compiler = shaderc::Compiler::new()
+        .ok_or(shaderc::Error::NullResultObject("Can't create compiler.".to_owned()))?;
+
+    let filepath = path::PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("data")
+        .join(name);
+
+    let contents = fs::read_to_string(&filepath)
+        .map_err(|e| shaderc::Error::NullResultObject(format!("{}", &e)))?;
+
+    let artifact = compiler.compile_into_spirv(&contents, kind, name, entry, None)?;
+    
+    Ok(artifact.as_binary_u8().to_owned())
 }
 
 /// Fully contained scene description.
