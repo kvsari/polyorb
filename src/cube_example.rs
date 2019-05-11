@@ -1,4 +1,4 @@
-use crate::Scene;
+use crate::scene::Scene;
 
 pub enum ShaderStage {
     Vertex,

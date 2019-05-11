@@ -3,7 +3,7 @@ use std::mem;
 
 use shaderc::ShaderKind;
 
-use crate::load_shader;
+use crate::scene::{Scene, load_shader};
 use crate::space::Vertex;
 
 static command_encoder_descriptor: wgpu::CommandEncoderDescriptor = wgpu::CommandEncoderDescriptor { todo: 0 };
@@ -127,17 +127,21 @@ pub struct SingleCubeScene {
 
 impl SingleCubeScene {
     fn generate_matrix(aspect_ratio: f32) -> cgmath::Matrix4<f32> {
-        let mx_projection = cgmath::perspective(cgmath::Deg(45f32), aspect_ratio, 1.0, 10.0);
+        let mx_projection = cgmath::perspective(
+            cgmath::Deg(45f32), aspect_ratio, 1.0, 10.0
+        );
+        
         let mx_view = cgmath::Matrix4::look_at(
             cgmath::Point3::new(1.5f32, -5.0, 3.0),
             cgmath::Point3::new(0f32, 0.0, 0.0),
             -cgmath::Vector3::unit_z(),
         );
+        
         mx_projection * mx_view
     }
 }
 
-impl super::Scene for SingleCubeScene {
+impl Scene for SingleCubeScene {
     fn init(desc: &wgpu::SwapChainDescriptor, device: &mut wgpu::Device) -> Self {
         let mut encoder = device.create_command_encoder(&command_encoder_descriptor);
         let (vertex_data, index_data) = create();
