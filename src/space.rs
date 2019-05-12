@@ -4,12 +4,12 @@ use std::mem;
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub struct Vertex {
     position: [f32; 4],
-    //normal: [f32; 4],
+    normal: [f32; 4],
 }
 
 impl Vertex {
-    pub fn new(position: [f32; 4]) -> Self {
-        Vertex { position }
+    pub fn new(position: [f32; 4], normal: [f32; 4]) -> Self {
+        Vertex { position, normal }
     }
 }
 

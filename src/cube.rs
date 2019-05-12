@@ -1,12 +1,11 @@
 //! Data for cube.
 use std::mem;
+use std::rc::Rc;
 
 use shaderc::ShaderKind;
 
-use crate::scene::{Scene, load_shader};
+use crate::scene::{Scene, load_shader, common::*};
 use crate::space::Vertex;
-
-static command_encoder_descriptor: wgpu::CommandEncoderDescriptor = wgpu::CommandEncoderDescriptor { todo: 0 };
 
 pub enum ShaderStage {
     Vertex,
@@ -38,47 +37,50 @@ pub fn load_glsl(name: &str, stage: ShaderStage) -> Vec<u8> {
     spv
 }
 
-pub fn vertexize(pos: [i8; 3]) -> Vertex {
-    Vertex::new([pos[0] as f32, pos[1] as f32, pos[2] as f32, 1_f32])
+pub fn vertexize(pos: [i8; 3], nor: [i8; 3]) -> Vertex {
+    Vertex::new(
+        [pos[0] as f32, pos[1] as f32, pos[2] as f32, 1_f32],
+        [nor[0] as f32, nor[1] as f32, nor[2] as f32, 0_f32],
+    )
 }
 
 pub fn create() -> (Vec<Vertex>, Vec<u16>) {
     let vertexes = [
         // Top
-        vertexize([-1, -1, 1]),
-        vertexize([1, -1, 1]),
-        vertexize([1, 1, 1]),
-        vertexize([-1, 1, 1]),
+        vertexize([-1, -1, 1], [0, 0, 1]),
+        vertexize([1, -1, 1], [0, 0, 1]),
+        vertexize([1, 1, 1], [0, 0, 1]),
+        vertexize([-1, 1, 1], [0, 0, 1]),
         
         // Bottom
-        vertexize([-1, 1, -1]),
-        vertexize([1, 1, -1]),
-        vertexize([1, -1, -1]),
-        vertexize([-1, -1, -1]),
+        vertexize([-1, 1, -1], [0, 0, -1]),
+        vertexize([1, 1, -1], [0, 0, -1]),
+        vertexize([1, -1, -1], [0, 0, -1]),
+        vertexize([-1, -1, -1], [0, 0, -1]),
         
         // Right
-        vertexize([1, -1, -1]),
-        vertexize([1, 1, -1]),
-        vertexize([1, 1, 1]),
-        vertexize([1, -1, 1]),
+        vertexize([1, -1, -1], [1, 0, 0]),
+        vertexize([1, 1, -1], [1, 0, 0]),
+        vertexize([1, 1, 1], [1, 0, 0]),
+        vertexize([1, -1, 1], [1, 0, 0]),
         
         // Left
-        vertexize([-1, -1, 1]),
-        vertexize([-1, 1, 1]),
-        vertexize([-1, 1, -1]),
-        vertexize([-1, -1, -1]),
+        vertexize([-1, -1, 1], [-1, 0, 0]),
+        vertexize([-1, 1, 1], [-1, 0, 0]),
+        vertexize([-1, 1, -1], [-1, 0, 0]),
+        vertexize([-1, -1, -1], [-1, 0, 0]),
         
         // Front
-        vertexize([1, 1, -1]),
-        vertexize([-1, 1, -1]),
-        vertexize([-1, 1, 1]),
-        vertexize([1, 1, 1]),
+        vertexize([1, 1, -1], [0, 1, 0]),
+        vertexize([-1, 1, -1], [0, 1, 0]),
+        vertexize([-1, 1, 1], [0, 1, 0]),
+        vertexize([1, 1, 1], [0, 1, 0]),
         
         // Back
-        vertexize([1, -1, 1]),
-        vertexize([-1, -1, 1]),
-        vertexize([-1, -1, -1]),
-        vertexize([1, -1, -1]),
+        vertexize([1, -1, 1], [0, -1, 0]),
+        vertexize([-1, -1, 1], [0, -1, 0]),
+        vertexize([-1, -1, -1], [0, -1, 0]),
+        vertexize([1, -1, -1], [0, -1, 0]),
     ];
 
     let indexes: &[u16] = &[
@@ -114,6 +116,12 @@ fn create_texels(size: usize) -> Vec<u8> {
                 .chain(iter::once(1))
         })
         .collect()
+}
+
+/// Contains vertices for the actual shape.
+pub struct Shape {
+    vertex_buf: Rc<wgpu::Buffer>,
+    index_buf: Rc<wgpu::Buffer>,
 }
 
 pub struct SingleCubeScene {
@@ -332,10 +340,12 @@ impl Scene for SingleCubeScene {
     }
     
     fn resize(&mut self, desc: &wgpu::SwapChainDescriptor, device: &mut wgpu::Device) { }
+    
     fn update(&mut self, event: wgpu::winit::WindowEvent) { }
+    
     fn render(&mut self, frame: &wgpu::SwapChainOutput, device: &mut wgpu::Device) {
-        let mut encoder =
-            device.create_command_encoder(&wgpu::CommandEncoderDescriptor { todo: 0 });
+        let mut encoder = device.create_command_encoder(&command_encoder_descriptor);
+        
         {
             let mut rpass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
                 color_attachments: &[wgpu::RenderPassColorAttachmentDescriptor {

@@ -95,3 +95,8 @@ pub fn run<S: Scene>(title: &str) -> Result<(), Box<dyn std::error::Error>> {
     
     Ok(())
 }
+
+pub mod common {
+    pub static command_encoder_descriptor: wgpu::CommandEncoderDescriptor
+        = wgpu::CommandEncoderDescriptor { todo: 0 };    
+}
