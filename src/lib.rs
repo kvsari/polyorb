@@ -11,6 +11,7 @@ pub mod scene;
 pub mod cube;
 pub mod space;
 
+pub mod triangle_example;
 pub mod cube_example;
 
 pub use self::scene::run;

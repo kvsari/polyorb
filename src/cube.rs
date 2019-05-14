@@ -7,36 +7,6 @@ use shaderc::ShaderKind;
 use crate::scene::{Scene, load_shader, common::*};
 use crate::space::Vertex;
 
-pub enum ShaderStage {
-    Vertex,
-    Fragment,
-    Compute,
-}
-
-pub fn load_glsl(name: &str, stage: ShaderStage) -> Vec<u8> {
-    use std::fs::read_to_string;
-    use std::io::Read;
-    use std::path::PathBuf;
-
-    let ty = match stage {
-        ShaderStage::Vertex => glsl_to_spirv::ShaderType::Vertex,
-        ShaderStage::Fragment => glsl_to_spirv::ShaderType::Fragment,
-        ShaderStage::Compute => glsl_to_spirv::ShaderType::Compute,
-    };
-    let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-        .join("data")
-        .join(name);
-    let code = match read_to_string(&path) {
-        Ok(code) => code,
-        Err(e) => panic!("Unable to read {:?}: {:?}", path, e),
-    };
-
-    let mut output = glsl_to_spirv::compile(&code, ty).unwrap();
-    let mut spv = Vec::new();
-    output.read_to_end(&mut spv).unwrap();
-    spv
-}
-
 pub fn vertexize(pos: [i8; 3], nor: [i8; 3]) -> Vertex {
     Vertex::new(
         [pos[0] as f32, pos[1] as f32, pos[2] as f32, 1_f32],
@@ -122,6 +92,10 @@ fn create_texels(size: usize) -> Vec<u8> {
 pub struct Shape {
     vertex_buf: Rc<wgpu::Buffer>,
     index_buf: Rc<wgpu::Buffer>,
+    bind_group: wgpu::BindGroup,
+    uniform_buf: wgpu::Buffer,
+    colour: wgpu::Color,
+    rotation_speed: f32,
 }
 
 pub struct SingleCubeScene {
