@@ -12,7 +12,7 @@ pub fn load_shader(
         .ok_or(shaderc::Error::NullResultObject("Can't create compiler.".to_owned()))?;
 
     let filepath = path::PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-        .join("data")
+        .join("shaders")
         .join(name);
 
     let contents = fs::read_to_string(&filepath)
