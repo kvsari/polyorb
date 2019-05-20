@@ -7,5 +7,6 @@ pub fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     info!("Running triangle demo...");
 
-    polyorb::run::<polyorb::triangle_example::TriangleScene01>("Triangle Scene 01")
+    //polyorb::run::<polyorb::triangle_example::TriangleScene01>("Triangle Scene 01")
+    polyorb::run::<polyorb::triangle_example::TriangleScene02>("Triangle Scene 02")
 }
