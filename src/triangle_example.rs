@@ -94,12 +94,12 @@ impl Scene for TriangleScene01 {
 #[derive(Debug, Copy, Clone)]
 struct Vertex {
     position: [f32; 2],
-    colour: [f32; 3],
+    //colour: [f32; 3],
 }
 
 impl Vertex {
-    fn new(position: [f32; 2], colour: [f32; 3]) -> Self {
-        Vertex { position, colour }
+    fn new(position: [f32; 2]/*, colour: [f32; 3]*/) -> Self {
+        Vertex { position, /*colour*/ }
     }
 
     pub const fn sizeof() -> usize {
@@ -109,9 +109,9 @@ impl Vertex {
 
 fn generate_triangle_vertices() -> Vec<Vertex> {
     let vertex_data = [
-        Vertex::new([0.5, -0.5], [1.0, 0.0, 0.0]),
-        Vertex::new([0.5, 0.5], [0.0, 1.0, 0.0]),
-        Vertex::new([-0.5, 0.5], [0.0, 0.0, 1.0]),
+        Vertex::new([0.0, -0.5]/*, [1.0, 0.0, 0.0]*/),
+        Vertex::new([0.5, 0.5]/*, [0.0, 1.0, 0.0]*/),
+        Vertex::new([-0.5, 0.5]/*, [0.0, 0.0, 1.0]*/),
     ];
 
     vertex_data.to_vec()
@@ -120,6 +120,7 @@ fn generate_triangle_vertices() -> Vec<Vertex> {
 pub struct TriangleScene02 {
     bind_group: wgpu::BindGroup,
     pipeline: wgpu::RenderPipeline,
+    vertex_buf: wgpu::Buffer,
 }
 
 impl Scene for TriangleScene02 {
@@ -153,15 +154,13 @@ impl Scene for TriangleScene02 {
         let bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
             layout: &bg_layout,
             bindings: &[
-                /*
                 wgpu::Binding {
                     binding: 0,
                     resource: wgpu::BindingResource::Buffer {
                         buffer: &vertex_buf,
-                        range: 0..64,
+                        range: 0..6,
                     }
                 }
-                */
             ],
         });
 
@@ -210,7 +209,7 @@ impl Scene for TriangleScene02 {
             sample_count: 1,
         });
 
-        TriangleScene02 { bind_group, pipeline }
+        TriangleScene02 { bind_group, pipeline, vertex_buf }
     }
     
     fn resize(&mut self, desc: &wgpu::SwapChainDescriptor, device: &mut wgpu::Device) { }
@@ -231,6 +230,7 @@ impl Scene for TriangleScene02 {
             });
             rpass.set_pipeline(&self.pipeline);
             rpass.set_bind_group(0, &self.bind_group);
+            rpass.set_vertex_buffers(&[(&self.vertex_buf, 0)]);
             rpass.draw(0..3, 0..1);
         }
 
