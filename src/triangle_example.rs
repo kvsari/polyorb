@@ -94,12 +94,12 @@ impl Scene for TriangleScene01 {
 #[derive(Debug, Copy, Clone)]
 struct Vertex {
     position: [f32; 2],
-    //colour: [f32; 3],
+    colour: [f32; 3],
 }
 
 impl Vertex {
-    fn new(position: [f32; 2]/*, colour: [f32; 3]*/) -> Self {
-        Vertex { position, /*colour*/ }
+    fn new(position: [f32; 2], colour: [f32; 3]) -> Self {
+        Vertex { position, colour }
     }
 
     pub const fn sizeof() -> usize {
@@ -109,9 +109,9 @@ impl Vertex {
 
 fn generate_triangle_vertices() -> Vec<Vertex> {
     let vertex_data = [
-        Vertex::new([0.0, -0.5]/*, [1.0, 0.0, 0.0]*/),
-        Vertex::new([0.5, 0.5]/*, [0.0, 1.0, 0.0]*/),
-        Vertex::new([-0.5, 0.5]/*, [0.0, 0.0, 1.0]*/),
+        Vertex::new([0.0, -0.5], [1.0, 0.0, 0.0]),
+        Vertex::new([0.5, 0.5], [0.0, 1.0, 0.0]),
+        Vertex::new([-0.5, 0.5], [0.0, 0.0, 1.0]),
     ];
 
     vertex_data.to_vec()
@@ -158,7 +158,7 @@ impl Scene for TriangleScene02 {
                     binding: 0,
                     resource: wgpu::BindingResource::Buffer {
                         buffer: &vertex_buf,
-                        range: 0..6,
+                        range: 0..15,
                     }
                 }
             ],
