@@ -3,14 +3,14 @@ use std::mem;
 
 use shaderc::ShaderKind;
 
-use crate::scene::{Scene, load_shader, common::*};
+use crate::scene::{Show, load_shader, common::*};
 
 pub struct TriangleScene01 {
     bind_group: wgpu::BindGroup,
     pipeline: wgpu::RenderPipeline,
 }
 
-impl Scene for TriangleScene01 {
+impl Show for TriangleScene01 {
     fn init(desc: &wgpu::SwapChainDescriptor, device: &mut wgpu::Device) -> Self {
         let vs_bytes = load_shader("triangle02.vert", "main", ShaderKind::Vertex).unwrap();
         let fs_bytes = load_shader("triangle02.frag", "main", ShaderKind::Fragment)
@@ -110,8 +110,8 @@ impl Vertex {
 fn generate_triangle_vertices() -> Vec<Vertex> {
     let vertex_data = [
         Vertex::new([0.0, -0.5], [1.0, 0.0, 0.0]),
-        Vertex::new([0.5, 0.5], [0.0, 1.0, 0.0]),
-        Vertex::new([-0.5, 0.5], [0.0, 0.0, 1.0]),
+        Vertex::new([0.5, 0.5], [1.0, 1.0, 0.0]),
+        Vertex::new([-0.5, 0.5], [1.0, 0.0, 1.0]),
     ];
 
     vertex_data.to_vec()
@@ -123,7 +123,7 @@ pub struct TriangleScene02 {
     vertex_buf: wgpu::Buffer,
 }
 
-impl Scene for TriangleScene02 {
+impl Show for TriangleScene02 {
     fn init(desc: &wgpu::SwapChainDescriptor, device: &mut wgpu::Device) -> Self {
         let vs_bytes = load_shader("triangle03.vert", "main", ShaderKind::Vertex).unwrap();
         let fs_bytes = load_shader("triangle03.frag", "main", ShaderKind::Fragment)

@@ -24,7 +24,7 @@ pub fn load_shader(
 }
 
 /// Fully contained scene description.
-pub trait Scene {
+pub trait Show {
     fn init(desc: &wgpu::SwapChainDescriptor, device: &mut wgpu::Device) -> Self;
     fn resize(&mut self, desc: &wgpu::SwapChainDescriptor, device: &mut wgpu::Device);
     fn update(&mut self, event: wgpu::winit::WindowEvent);
@@ -32,7 +32,7 @@ pub trait Scene {
 }
 
 /// Taken heavily from the examples in wgpu crate. I have no idea otherwise how to use.
-pub fn run<S: Scene>(title: &str) -> Result<(), Box<dyn std::error::Error>> {
+pub fn run<S: Show>(title: &str) -> Result<(), Box<dyn std::error::Error>> {
     info!("Initializing the renderer.");
     
     let instance = wgpu::Instance::new();

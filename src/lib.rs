@@ -8,8 +8,9 @@ use wgpu::winit::{self, Event};
 use shaderc::ShaderKind;
 
 pub mod scene;
-pub mod cube;
-pub mod space;
+//pub mod cube;
+//pub mod space;
+pub mod tetrahedron;
 
 pub mod triangle_example;
 pub mod cube_example;

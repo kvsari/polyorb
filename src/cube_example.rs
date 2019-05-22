@@ -1,4 +1,4 @@
-use crate::scene::Scene;
+use crate::scene::Show;
 
 pub enum ShaderStage {
     Vertex,
@@ -133,7 +133,7 @@ impl Example {
     }
 }
 
-impl Scene for Example {
+impl Show for Example {
     fn init(sc_desc: &wgpu::SwapChainDescriptor, device: &mut wgpu::Device) -> Self {
         use std::mem;
 
