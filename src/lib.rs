@@ -10,6 +10,7 @@ use shaderc::ShaderKind;
 pub mod scene;
 //pub mod cube;
 //pub mod space;
+pub mod shape;
 pub mod tetrahedron;
 
 pub mod triangle_example;

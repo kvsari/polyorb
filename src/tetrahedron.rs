@@ -6,6 +6,7 @@ use shaderc::ShaderKind;
 use cgmath::{Point2, Basis2, Rotation, Rotation2};
 
 use crate::scene::{Show, load_shader, common::*};
+use crate::shape::{square, equilateral_triangle};
 
 static deg60: cgmath::Deg<f32> = cgmath::Deg(60_f32);
 
@@ -25,28 +26,32 @@ impl Vertex {
     }
 }
 
-/// Create an equilateral triangle where its leftmost point is (0, 0). It's up to consumers
-/// to translate/scale/rotate the triangle for their needs.
-pub fn equilateral_triangle(len: f32) -> [Point2<f32>; 3] {
-    let rotation: Basis2<f32> = Rotation2::from_angle(deg60);
-    let p1: Point2<f32> = (0f32, 0f32).into();
-    let p2: Point2<f32> = Point2::new(p1.x + len, p1.y);
-    let p3: Point2<f32> = rotation.rotate_point(p2);
-
-    [p1, p2, p3]
-}
-
-fn gen_vertexes_01(colour: [f32; 3]) -> Vec<Vertex> {
-    equilateral_triangle(1_f32)
+fn gen_shape_01(side_len: f32, colour: [f32; 3]) -> (Vec<Vertex>, Vec<u16>) {
+    let (points, index) = equilateral_triangle(side_len);
+    let vertexes = points
         .into_iter()
         .map(|p| Vertex::new([p.x, p.y, 0_f32], colour))
-        .collect()
+        .collect();
+    
+    (vertexes, index.to_vec())
+}
+
+fn gen_shape_02(side_len: f32, colour: [f32; 3]) -> (Vec<Vertex>, Vec<u16>) {
+    let (points, index) = square(side_len);
+    let vertexes = points
+        .into_iter()
+        .map(|p| Vertex::new([p.x, p.y, 0_f32], colour))
+        .collect();
+
+    (vertexes, index.to_vec())
 }
 
 pub struct Scene {
     bind_group: wgpu::BindGroup,
     pipeline: wgpu::RenderPipeline,
     vertex_buf: wgpu::Buffer,
+    index_buf: wgpu::Buffer,
+    index_len: usize,
 }
 
 impl Scene {
@@ -54,8 +59,10 @@ impl Scene {
         bind_group: wgpu::BindGroup,
         pipeline: wgpu::RenderPipeline,
         vertex_buf: wgpu::Buffer,
+        index_buf: wgpu::Buffer,
+        index_len: usize,
     ) -> Self {
-        Scene { bind_group, pipeline, vertex_buf }
+        Scene { bind_group, pipeline, vertex_buf, index_buf, index_len }
     }
 }
 
@@ -68,10 +75,14 @@ impl Show for Scene {
         let vs_module = device.create_shader_module(&vs_bytes);
         let fs_module = device.create_shader_module(&fs_bytes);
 
-        let vertexes = gen_vertexes_01([1.0, 0.0, 0.0]);
+        let (vertexes, indexes) = gen_shape_01(1f32, [1.0, 0.0, 0.0]);
         let vertex_buf = device
             .create_buffer_mapped(vertexes.len(), wgpu::BufferUsageFlags::VERTEX)
             .fill_from_slice(&vertexes);
+
+        let index_buf = device
+            .create_buffer_mapped(indexes.len(), wgpu::BufferUsageFlags::INDEX)
+            .fill_from_slice(&indexes);
 
         let bg_layout = device.create_bind_group_layout(
             &wgpu::BindGroupLayoutDescriptor { bindings: &[
@@ -132,7 +143,7 @@ impl Show for Scene {
                 attributes: &[
                     wgpu::VertexAttributeDescriptor {
                         attribute_index: 0,
-                        format: wgpu::VertexFormat::Float2,
+                        format: wgpu::VertexFormat::Float3,
                         offset: 0,
                     },
                     wgpu::VertexAttributeDescriptor {
@@ -145,7 +156,7 @@ impl Show for Scene {
             sample_count: 1,
         });
 
-        Scene::new(bind_group, pipeline, vertex_buf)
+        Scene::new(bind_group, pipeline, vertex_buf, index_buf, indexes.len())
     }
 
     fn resize(&mut self, desc: &wgpu::SwapChainDescriptor, device: &mut wgpu::Device) { }
@@ -165,10 +176,12 @@ impl Show for Scene {
             });
             rpass.set_pipeline(&self.pipeline);
             rpass.set_bind_group(0, &self.bind_group);
+            rpass.set_index_buffer(&self.index_buf, 0);
             rpass.set_vertex_buffers(&[(&self.vertex_buf, 0)]);
-            rpass.draw(0..3, 0..1);
+            rpass.draw_indexed(0..self.index_len as u32, 0, 0..1);
         }
 
         device.get_queue().submit(&[encoder.finish()]);
     }
 }
+
