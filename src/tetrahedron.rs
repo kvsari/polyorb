@@ -49,8 +49,9 @@ fn gen_shape_02(side_len: f32, colour: [f32; 3]) -> (Vec<Vertex>, Vec<u16>) {
 pub struct Scene {
     bind_group: wgpu::BindGroup,
     pipeline: wgpu::RenderPipeline,
+    uniform_buf: wgpu::Buffer,
     vertex_buf: wgpu::Buffer,
-    index_buf: wgpu::Buffer,
+    index_buf: wgpu::Buffer,    
     index_len: usize,
 }
 
@@ -58,22 +59,48 @@ impl Scene {
     fn new(
         bind_group: wgpu::BindGroup,
         pipeline: wgpu::RenderPipeline,
+        uniform_buf: wgpu::Buffer,
         vertex_buf: wgpu::Buffer,
         index_buf: wgpu::Buffer,
         index_len: usize,
     ) -> Self {
-        Scene { bind_group, pipeline, vertex_buf, index_buf, index_len }
+        Scene { bind_group, pipeline, uniform_buf, vertex_buf, index_buf, index_len }
+    }
+
+    fn projection(aspect_ratio: f32) -> cgmath::Matrix4<f32> {
+        let perspective = cgmath::perspective(
+            cgmath::Deg(45f32), 2f32, 1.0, 10.0
+        );
+
+        let view = cgmath::Matrix4::look_at(
+            cgmath::Point3::new(1f32, 0f32, 1f32),
+            cgmath::Point3::new(0f32, 0f32, 0f32),
+            -cgmath::Vector3::unit_z(),
+        );
+        perspective * view
     }
 }
 
 impl Show for Scene {
     fn init(desc: &wgpu::SwapChainDescriptor, device: &mut wgpu::Device) -> Self {
+        let mut cmd_encoder = device
+            .create_command_encoder(&wgpu::CommandEncoderDescriptor { todo: 0 });
+        
         let vs_bytes = load_shader("tetrahedron.vert", "main", ShaderKind::Vertex).unwrap();
         let fs_bytes = load_shader("tetrahedron.frag", "main", ShaderKind::Fragment)
             .unwrap();
 
         let vs_module = device.create_shader_module(&vs_bytes);
         let fs_module = device.create_shader_module(&fs_bytes);
+
+        let projection = Self::projection(desc.width as f32 / desc.height as f32);
+        let p_ref: &[f32; 16] = projection.as_ref();
+        let uniform_buf = device
+            .create_buffer_mapped(
+                16,
+                wgpu::BufferUsageFlags::UNIFORM | wgpu::BufferUsageFlags::TRANSFER_DST,
+            )
+            .fill_from_slice(p_ref);
 
         let (vertexes, indexes) = gen_shape_01(1f32, [1.0, 0.0, 0.0]);
         let vertex_buf = device
@@ -104,8 +131,10 @@ impl Show for Scene {
                 wgpu::Binding {
                     binding: 0,
                     resource: wgpu::BindingResource::Buffer {
-                        buffer: &vertex_buf,
-                        range: 0..18,
+                        //buffer: &vertex_buf,
+                        buffer: &uniform_buf,
+                        //range: 0..18,
+                        range: 0..64,
                     }
                 }
             ],
@@ -156,7 +185,9 @@ impl Show for Scene {
             sample_count: 1,
         });
 
-        Scene::new(bind_group, pipeline, vertex_buf, index_buf, indexes.len())
+        let cmd_buf = cmd_encoder.finish();
+        device.get_queue().submit(&[cmd_buf]);
+        Scene::new(bind_group, pipeline, uniform_buf, vertex_buf, index_buf, indexes.len())
     }
 
     fn resize(&mut self, desc: &wgpu::SwapChainDescriptor, device: &mut wgpu::Device) { }

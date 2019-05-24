@@ -17,7 +17,7 @@ pub fn load_glsl(name: &str, stage: ShaderStage) -> Vec<u8> {
         ShaderStage::Compute => glsl_to_spirv::ShaderType::Compute,
     };
     let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-        .join("data")
+        .join("shaders")
         .join(name);
     let code = match read_to_string(&path) {
         Ok(code) => code,
