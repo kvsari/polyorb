@@ -4,7 +4,7 @@ use std::rc::Rc;
 
 use shaderc::ShaderKind;
 
-use crate::scene::{Scene, load_shader, common::*};
+use crate::show::{Scene, load_shader, common::*};
 use crate::space::Vertex;
 
 pub fn vertexize(pos: [i8; 3], nor: [i8; 3]) -> Vertex {

@@ -1,4 +1,4 @@
-use crate::scene::Show;
+use crate::show::Show;
 
 pub enum ShaderStage {
     Vertex,

@@ -7,7 +7,9 @@ use log::info;
 use wgpu::winit::{self, Event};
 use shaderc::ShaderKind;
 
-pub mod scene;
+pub mod show;
+pub mod input;
+//pub mod keyboard;
 //pub mod cube;
 //pub mod space;
 pub mod shape;
@@ -16,7 +18,7 @@ pub mod tetrahedron;
 pub mod triangle_example;
 pub mod cube_example;
 
-pub use self::scene::run;
+pub use self::show::run;
 
 /// Platonic solid that is used as a base for the `GoldberPolyhedron`.
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]

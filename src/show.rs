@@ -97,6 +97,7 @@ pub fn run<S: Show>(title: &str) -> Result<(), Box<dyn std::error::Error>> {
 }
 
 pub mod common {
+    
     pub static command_encoder_descriptor: wgpu::CommandEncoderDescriptor
-        = wgpu::CommandEncoderDescriptor { todo: 0 };    
+        = wgpu::CommandEncoderDescriptor { todo: 0 };
 }

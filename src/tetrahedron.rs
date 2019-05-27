@@ -4,8 +4,9 @@ use std::mem;
 
 use shaderc::ShaderKind;
 use cgmath::{Point2, Basis2, Rotation, Rotation2};
+use wgpu::winit::{WindowEvent, KeyboardInput};
 
-use crate::scene::{Show, load_shader, common::*};
+use crate::show::{Show, load_shader, common::*};
 use crate::shape::{square, equilateral_triangle};
 
 static deg60: cgmath::Deg<f32> = cgmath::Deg(60_f32);
@@ -69,7 +70,7 @@ impl Scene {
 
     fn projection(aspect_ratio: f32) -> cgmath::Matrix4<f32> {
         let perspective = cgmath::perspective(
-            cgmath::Deg(45f32), 2f32, 1.0, 10.0
+            cgmath::Deg(45f32), aspect_ratio, 1.0, 10.0
         );
 
         let view = cgmath::Matrix4::look_at(
@@ -83,8 +84,7 @@ impl Scene {
 
 impl Show for Scene {
     fn init(desc: &wgpu::SwapChainDescriptor, device: &mut wgpu::Device) -> Self {
-        let mut cmd_encoder = device
-            .create_command_encoder(&wgpu::CommandEncoderDescriptor { todo: 0 });
+        let mut cmd_encoder = device.create_command_encoder(&command_encoder_descriptor);
         
         let vs_bytes = load_shader("tetrahedron.vert", "main", ShaderKind::Vertex).unwrap();
         let fs_bytes = load_shader("tetrahedron.frag", "main", ShaderKind::Fragment)
@@ -191,7 +191,13 @@ impl Show for Scene {
     }
 
     fn resize(&mut self, desc: &wgpu::SwapChainDescriptor, device: &mut wgpu::Device) { }
-    fn update(&mut self, event: wgpu::winit::WindowEvent) { }
+    
+    fn update(&mut self, event: WindowEvent) {
+        match event {
+            
+            _ => (),
+        }
+    }
     
     fn render(&mut self, frame: &wgpu::SwapChainOutput, device: &mut wgpu::Device) {
         let mut encoder = device.create_command_encoder(&command_encoder_descriptor);

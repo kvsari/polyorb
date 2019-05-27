@@ -3,7 +3,7 @@ use std::mem;
 
 use shaderc::ShaderKind;
 
-use crate::scene::{Show, load_shader, common::*};
+use crate::show::{Show, load_shader, common::*};
 
 pub struct TriangleScene01 {
     bind_group: wgpu::BindGroup,
