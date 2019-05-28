@@ -6,7 +6,7 @@ use shaderc::ShaderKind;
 use cgmath::{Point2, Basis2, Rotation, Rotation2};
 use wgpu::winit::{WindowEvent, KeyboardInput};
 
-use crate::show::{Show, load_shader, common::*};
+use crate::show::{Show, Sight, load_shader, common::*};
 use crate::shape::{square, equilateral_triangle};
 
 static deg60: cgmath::Deg<f32> = cgmath::Deg(60_f32);
@@ -54,6 +54,7 @@ pub struct Scene {
     vertex_buf: wgpu::Buffer,
     index_buf: wgpu::Buffer,    
     index_len: usize,
+    sight: Sight<f32>,
 }
 
 impl Scene {
@@ -64,26 +65,16 @@ impl Scene {
         vertex_buf: wgpu::Buffer,
         index_buf: wgpu::Buffer,
         index_len: usize,
+        sight: Sight<f32>,
     ) -> Self {
-        Scene { bind_group, pipeline, uniform_buf, vertex_buf, index_buf, index_len }
-    }
-
-    fn projection(aspect_ratio: f32) -> cgmath::Matrix4<f32> {
-        let perspective = cgmath::perspective(
-            cgmath::Deg(45f32), aspect_ratio, 1.0, 10.0
-        );
-
-        let view = cgmath::Matrix4::look_at(
-            cgmath::Point3::new(1f32, 0f32, 1f32),
-            cgmath::Point3::new(0f32, 0f32, 0f32),
-            -cgmath::Vector3::unit_z(),
-        );
-        perspective * view
+        Scene { bind_group, pipeline, uniform_buf, vertex_buf, index_buf, index_len, sight }
     }
 }
 
 impl Show for Scene {
-    fn init(desc: &wgpu::SwapChainDescriptor, device: &mut wgpu::Device) -> Self {
+    fn init(
+        desc: &wgpu::SwapChainDescriptor, device: &mut wgpu::Device, sight: Sight<f32>,
+    ) -> Self {
         let mut cmd_encoder = device.create_command_encoder(&command_encoder_descriptor);
         
         let vs_bytes = load_shader("tetrahedron.vert", "main", ShaderKind::Vertex).unwrap();
@@ -93,7 +84,8 @@ impl Show for Scene {
         let vs_module = device.create_shader_module(&vs_bytes);
         let fs_module = device.create_shader_module(&fs_bytes);
 
-        let projection = Self::projection(desc.width as f32 / desc.height as f32);
+        //let projection = Self::projection(desc.width as f32 / desc.height as f32);
+        let projection = sight.projection();
         let p_ref: &[f32; 16] = projection.as_ref();
         let uniform_buf = device
             .create_buffer_mapped(
@@ -187,7 +179,9 @@ impl Show for Scene {
 
         let cmd_buf = cmd_encoder.finish();
         device.get_queue().submit(&[cmd_buf]);
-        Scene::new(bind_group, pipeline, uniform_buf, vertex_buf, index_buf, indexes.len())
+        Scene::new(
+            bind_group, pipeline, uniform_buf, vertex_buf, index_buf, indexes.len(), sight
+        )
     }
 
     fn resize(&mut self, desc: &wgpu::SwapChainDescriptor, device: &mut wgpu::Device) { }

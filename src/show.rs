@@ -2,6 +2,7 @@
 use std::{path, fs};
 
 use log::info;
+use cgmath::{Deg, Rad, Matrix4, Point3, Vector3, BaseFloat};
 use wgpu::winit::{self, Event};
 use shaderc::ShaderKind;
 
@@ -23,9 +24,62 @@ pub fn load_shader(
     Ok(artifact.as_binary_u8().to_owned())
 }
 
+#[derive(Debug, Copy, Clone)]
+pub struct Perspective<S: BaseFloat> {
+    fov: Rad<S>,
+    aspect_ratio: S,
+    near: S,
+    far: S,
+}
+
+impl<S: BaseFloat>  Perspective<S> {
+    pub fn new<T: Into<Rad<S>>>(fov: T, aspect_ratio: S, near: S, far: S) -> Self {
+        Perspective { fov: fov.into(), aspect_ratio, near, far }
+    }
+
+    pub fn as_matrix(&self) -> Matrix4<S> {
+        cgmath::perspective(self.fov, self.aspect_ratio, self.near, self.far)
+    }
+}
+
+#[derive(Debug, Copy, Clone)]
+pub struct Look<S: BaseFloat> {
+    eye: Point3<S>,
+    at: Point3<S>,
+    up: Vector3<S>,
+}
+
+impl<S: BaseFloat> Look<S> {
+    pub fn new(eye: Point3<S>, at: Point3<S>, up: Vector3<S>) -> Self {
+        Look { eye, at, up }
+    }
+
+    pub fn as_matrix(&self) -> Matrix4<S> {
+        cgmath::Matrix4::look_at(self.eye, self.at, self.up)
+    }
+}
+
+#[derive(Debug, Copy, Clone)]
+pub struct Sight<S: BaseFloat> {
+    perspective: Perspective<S>,
+    look: Look<S>,
+}
+
+impl<S: BaseFloat> Sight<S> {
+    pub fn new(perspective: Perspective<S>, look: Look<S>) -> Self {
+        Sight { perspective, look }
+    }
+
+    pub fn projection(&self) -> Matrix4<S> {
+        self.perspective.as_matrix() * self.look.as_matrix()
+    }
+}
+
 /// Fully contained scene description.
 pub trait Show {
-    fn init(desc: &wgpu::SwapChainDescriptor, device: &mut wgpu::Device) -> Self;
+    fn init(
+        desc: &wgpu::SwapChainDescriptor, device: &mut wgpu::Device, sight: Sight<f32>
+    ) -> Self;
     fn resize(&mut self, desc: &wgpu::SwapChainDescriptor, device: &mut wgpu::Device);
     fn update(&mut self, event: wgpu::winit::WindowEvent);
     fn render(&mut self, frame: &wgpu::SwapChainOutput, device: &mut wgpu::Device);
@@ -53,18 +107,26 @@ pub fn run<S: Show>(title: &str) -> Result<(), Box<dyn std::error::Error>> {
         .get_inner_size()
         .unwrap()
         .to_physical(window.get_hidpi_factor());
+    let w_width = w_size.width.round() as f32;
+    let w_height = w_size.height.round() as f32;
+
+    let perspective = Perspective::new(Deg(45f32), w_width / w_height, 1f32, 10f32);
+    let look = Look::new(
+        Point3::new(1f32, 0f32, 1f32), Point3::new(0f32, 0f32, 0f32), -Vector3::unit_z()
+    );
+    let sight = Sight::new(perspective, look);
 
     let surface = instance.create_surface(&window);
     let mut desc = wgpu::SwapChainDescriptor {
         usage: wgpu::TextureUsageFlags::OUTPUT_ATTACHMENT,
         format: wgpu::TextureFormat::Bgra8Unorm,
-        width: w_size.width.round() as u32,
-        height: w_size.height.round() as u32,
+        width: w_width as u32,
+        height: w_height as u32,
     };
     let mut swap_chain = device.create_swap_chain(&surface, &desc);
 
     info!("Initializing the scene.");
-    let mut scene = S::init(&desc, &mut device);
+    let mut scene = S::init(&desc, &mut device, sight);
 
     info!("Entering event loop.");
     let mut running = true;

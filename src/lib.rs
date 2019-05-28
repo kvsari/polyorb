@@ -15,8 +15,8 @@ pub mod input;
 pub mod shape;
 pub mod tetrahedron;
 
-pub mod triangle_example;
-pub mod cube_example;
+//pub mod triangle_example;
+//pub mod cube_example;
 
 pub use self::show::run;
 
