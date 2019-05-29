@@ -3,7 +3,7 @@
 use std::mem;
 
 use shaderc::ShaderKind;
-use cgmath::{Point2, Basis2, Rotation, Rotation2};
+use cgmath::{Point2, Basis2, Rotation, Rotation2, Vector3};
 use wgpu::winit::{WindowEvent, KeyboardInput};
 
 use crate::show::{Show, Sight, load_shader, common::*};
@@ -186,15 +186,29 @@ impl Show for Scene {
 
     fn resize(&mut self, desc: &wgpu::SwapChainDescriptor, device: &mut wgpu::Device) { }
     
-    fn update(&mut self, event: WindowEvent) {
-        match event {
-            
-            _ => (),
-        }
+    fn update(&mut self, eye_movement: Vector3<f32>) {
+        self.sight.move_eye(eye_movement);
     }
     
     fn render(&mut self, frame: &wgpu::SwapChainOutput, device: &mut wgpu::Device) {
         let mut encoder = device.create_command_encoder(&command_encoder_descriptor);
+
+        // Use our latest projection even if the camera(eye) didn't change.
+        {
+            let projection = self.sight.projection();
+            let p_ref: &[f32; 16] = projection.as_ref();
+            let new_uniform_buf = device
+                .create_buffer_mapped(
+                    16,
+                    wgpu::BufferUsageFlags::UNIFORM | wgpu::BufferUsageFlags::TRANSFER_SRC,
+                )
+                .fill_from_slice(p_ref);
+            
+            encoder.copy_buffer_to_buffer(
+                &new_uniform_buf, 0, &self.uniform_buf, 0, 16 * 4
+            );
+        }
+        
         {
             let mut rpass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
                 color_attachments: &[wgpu::RenderPassColorAttachmentDescriptor {

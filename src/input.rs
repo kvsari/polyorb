@@ -47,7 +47,7 @@ impl Default for ActionState {
 fn compute_camera(state: &ActionState, increment: f32) -> Camera {
     state.emap
         .iter()
-        .fold(Vector3::zero(), |mut v, (a, s)| -> Vector3<f32> {
+        .fold(Camera::zero(), |mut v, (a, s)| -> Camera {
             match (a, s) {
                 (Action::CameraMovePX, true) => v.x = increment,
                 (Action::CameraMoveNX, true) => v.x = increment.neg(),

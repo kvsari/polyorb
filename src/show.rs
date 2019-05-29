@@ -6,6 +6,8 @@ use cgmath::{Deg, Rad, Matrix4, Point3, Vector3, BaseFloat};
 use wgpu::winit::{self, Event};
 use shaderc::ShaderKind;
 
+use crate::input::{self, handle_keyboard};
+
 pub fn load_shader(
     name: &str, entry: &str, kind: ShaderKind
 ) -> Result<Vec<u8>, shaderc::Error> {
@@ -57,6 +59,10 @@ impl<S: BaseFloat> Look<S> {
     pub fn as_matrix(&self) -> Matrix4<S> {
         cgmath::Matrix4::look_at(self.eye, self.at, self.up)
     }
+
+    pub fn move_eye(&mut self, increment: Vector3<S>) {
+        self.eye += increment;
+    }
 }
 
 #[derive(Debug, Copy, Clone)]
@@ -73,6 +79,10 @@ impl<S: BaseFloat> Sight<S> {
     pub fn projection(&self) -> Matrix4<S> {
         self.perspective.as_matrix() * self.look.as_matrix()
     }
+
+    pub fn move_eye(&mut self, increment: Vector3<S>) {
+        self.look.move_eye(increment);
+    }
 }
 
 /// Fully contained scene description.
@@ -81,7 +91,7 @@ pub trait Show {
         desc: &wgpu::SwapChainDescriptor, device: &mut wgpu::Device, sight: Sight<f32>
     ) -> Self;
     fn resize(&mut self, desc: &wgpu::SwapChainDescriptor, device: &mut wgpu::Device);
-    fn update(&mut self, event: wgpu::winit::WindowEvent);
+    fn update(&mut self, eye_movement: Vector3<f32>);
     fn render(&mut self, frame: &wgpu::SwapChainOutput, device: &mut wgpu::Device);
 }
 
@@ -115,6 +125,8 @@ pub fn run<S: Show>(title: &str) -> Result<(), Box<dyn std::error::Error>> {
         Point3::new(1f32, 0f32, 1f32), Point3::new(0f32, 0f32, 0f32), -Vector3::unit_z()
     );
     let sight = Sight::new(perspective, look);
+    let bindings = input::Bindings::default();
+    let mut act_state = input::ActionState::default();
 
     let surface = instance.create_surface(&window);
     let mut desc = wgpu::SwapChainDescriptor {
@@ -143,10 +155,16 @@ pub fn run<S: Show>(title: &str) -> Result<(), Box<dyn std::error::Error>> {
                 }
                 | winit::WindowEvent::CloseRequested => {
                     running = false;
-                }
-                _ => {
-                    scene.update(event);
-                }                
+                },
+                winit::WindowEvent::KeyboardInput { input: keyboard_input, .. } => {
+                    let maybie = input::handle_keyboard(
+                        &keyboard_input, &bindings, &mut act_state
+                    );
+                    if let Some(eye_movement) = maybie {
+                        scene.update(eye_movement);
+                    }
+                },
+                _ => (),
             },
             _ => (),
         });
