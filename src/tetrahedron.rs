@@ -6,7 +6,7 @@ use shaderc::ShaderKind;
 use cgmath::{Point2, Basis2, Rotation, Rotation2, Vector3};
 use wgpu::winit::{WindowEvent, KeyboardInput};
 
-use crate::show::{Show, Sight, load_shader, common::*};
+use crate::show::{Show, Camera, load_shader, common::*};
 use crate::shape::{square, equilateral_triangle};
 
 static deg60: cgmath::Deg<f32> = cgmath::Deg(60_f32);
@@ -54,7 +54,7 @@ pub struct Scene {
     vertex_buf: wgpu::Buffer,
     index_buf: wgpu::Buffer,    
     index_len: usize,
-    sight: Sight<f32>,
+    camera: Camera<f32>,
 }
 
 impl Scene {
@@ -65,15 +65,17 @@ impl Scene {
         vertex_buf: wgpu::Buffer,
         index_buf: wgpu::Buffer,
         index_len: usize,
-        sight: Sight<f32>,
+        camera: Camera<f32>,
     ) -> Self {
-        Scene { bind_group, pipeline, uniform_buf, vertex_buf, index_buf, index_len, sight }
+        Scene {
+            bind_group, pipeline, uniform_buf, vertex_buf, index_buf, index_len, camera,
+        }
     }
 }
 
 impl Show for Scene {
     fn init(
-        desc: &wgpu::SwapChainDescriptor, device: &mut wgpu::Device, sight: Sight<f32>,
+        desc: &wgpu::SwapChainDescriptor, device: &mut wgpu::Device, camera: Camera<f32>,
     ) -> Self {
         let mut cmd_encoder = device.create_command_encoder(&command_encoder_descriptor);
         
@@ -84,8 +86,7 @@ impl Show for Scene {
         let vs_module = device.create_shader_module(&vs_bytes);
         let fs_module = device.create_shader_module(&fs_bytes);
 
-        //let projection = Self::projection(desc.width as f32 / desc.height as f32);
-        let projection = sight.projection();
+        let projection = camera.projection();
         let p_ref: &[f32; 16] = projection.as_ref();
         let uniform_buf = device
             .create_buffer_mapped(
@@ -180,14 +181,14 @@ impl Show for Scene {
         let cmd_buf = cmd_encoder.finish();
         device.get_queue().submit(&[cmd_buf]);
         Scene::new(
-            bind_group, pipeline, uniform_buf, vertex_buf, index_buf, indexes.len(), sight
+            bind_group, pipeline, uniform_buf, vertex_buf, index_buf, indexes.len(), camera,
         )
     }
 
     fn resize(&mut self, desc: &wgpu::SwapChainDescriptor, device: &mut wgpu::Device) { }
     
-    fn update(&mut self, eye_movement: Vector3<f32>) {
-        self.sight.move_eye(eye_movement);
+    fn update(&mut self, camera_movement: Vector3<f32>) {
+        self.camera.move_camera(camera_movement);
     }
     
     fn render(&mut self, frame: &wgpu::SwapChainOutput, device: &mut wgpu::Device) {
@@ -195,7 +196,7 @@ impl Show for Scene {
 
         // Use our latest projection even if the camera(eye) didn't change.
         {
-            let projection = self.sight.projection();
+            let projection = self.camera.projection();
             let p_ref: &[f32; 16] = projection.as_ref();
             let new_uniform_buf = device
                 .create_buffer_mapped(
@@ -208,7 +209,8 @@ impl Show for Scene {
                 &new_uniform_buf, 0, &self.uniform_buf, 0, 16 * 4
             );
         }
-        
+
+        // Render
         {
             let mut rpass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
                 color_attachments: &[wgpu::RenderPassColorAttachmentDescriptor {

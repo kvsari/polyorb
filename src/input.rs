@@ -16,7 +16,7 @@ pub enum Action {
     CameraMovePZ,
     CameraMoveNX,
     CameraMoveNY,
-    CameraMoveNZ,
+    CameraMoveNZ,    
 }
 
 #[derive(Debug, Copy, Clone)]
@@ -87,10 +87,10 @@ impl Bindings {
 impl Default for Bindings {
     fn default() -> Self {
         let mut bindings = Bindings::new(0.1f32);
-        bindings.bind(VirtualKeyCode::Up, Action::CameraMoveNY);
-        bindings.bind(VirtualKeyCode::Down, Action::CameraMovePY);
-        bindings.bind(VirtualKeyCode::Left, Action::CameraMovePX);
-        bindings.bind(VirtualKeyCode::Right, Action::CameraMoveNX);
+        bindings.bind(VirtualKeyCode::W, Action::CameraMoveNY);
+        bindings.bind(VirtualKeyCode::S, Action::CameraMovePY);
+        bindings.bind(VirtualKeyCode::A, Action::CameraMovePX);
+        bindings.bind(VirtualKeyCode::D, Action::CameraMoveNX);
 
         bindings
     }

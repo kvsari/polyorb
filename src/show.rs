@@ -45,53 +45,53 @@ impl<S: BaseFloat>  Perspective<S> {
 }
 
 #[derive(Debug, Copy, Clone)]
-pub struct Look<S: BaseFloat> {
-    eye: Point3<S>,
+pub struct View<S: BaseFloat> {
+    from: Point3<S>,
     at: Point3<S>,
     up: Vector3<S>,
 }
 
-impl<S: BaseFloat> Look<S> {
-    pub fn new(eye: Point3<S>, at: Point3<S>, up: Vector3<S>) -> Self {
-        Look { eye, at, up }
+impl<S: BaseFloat> View<S> {
+    pub fn new(from: Point3<S>, at: Point3<S>, up: Vector3<S>) -> Self {
+        View { from, at, up }
     }
 
     pub fn as_matrix(&self) -> Matrix4<S> {
-        cgmath::Matrix4::look_at(self.eye, self.at, self.up)
+        cgmath::Matrix4::look_at(self.from, self.at, self.up)
     }
 
-    pub fn move_eye(&mut self, increment: Vector3<S>) {
-        self.eye += increment;
+    pub fn move_camera(&mut self, increment: Vector3<S>) {
+        self.from += increment;
     }
 }
 
 #[derive(Debug, Copy, Clone)]
-pub struct Sight<S: BaseFloat> {
+pub struct Camera<S: BaseFloat> {
     perspective: Perspective<S>,
-    look: Look<S>,
+    view: View<S>,
 }
 
-impl<S: BaseFloat> Sight<S> {
-    pub fn new(perspective: Perspective<S>, look: Look<S>) -> Self {
-        Sight { perspective, look }
+impl<S: BaseFloat> Camera<S> {
+    pub fn new(perspective: Perspective<S>, view: View<S>) -> Self {
+        Camera { perspective, view }
     }
 
     pub fn projection(&self) -> Matrix4<S> {
-        self.perspective.as_matrix() * self.look.as_matrix()
+        self.perspective.as_matrix() * self.view.as_matrix()
     }
 
-    pub fn move_eye(&mut self, increment: Vector3<S>) {
-        self.look.move_eye(increment);
+    pub fn move_camera(&mut self, increment: Vector3<S>) {
+        self.view.move_camera(increment);
     }
 }
 
 /// Fully contained scene description.
 pub trait Show {
     fn init(
-        desc: &wgpu::SwapChainDescriptor, device: &mut wgpu::Device, sight: Sight<f32>
+        desc: &wgpu::SwapChainDescriptor, device: &mut wgpu::Device, camera: Camera<f32>,
     ) -> Self;
     fn resize(&mut self, desc: &wgpu::SwapChainDescriptor, device: &mut wgpu::Device);
-    fn update(&mut self, eye_movement: Vector3<f32>);
+    fn update(&mut self, camera_movement: Vector3<f32>);
     fn render(&mut self, frame: &wgpu::SwapChainOutput, device: &mut wgpu::Device);
 }
 
@@ -121,10 +121,10 @@ pub fn run<S: Show>(title: &str) -> Result<(), Box<dyn std::error::Error>> {
     let w_height = w_size.height.round() as f32;
 
     let perspective = Perspective::new(Deg(45f32), w_width / w_height, 1f32, 10f32);
-    let look = Look::new(
+    let view = View::new(
         Point3::new(1f32, 0f32, 1f32), Point3::new(0f32, 0f32, 0f32), -Vector3::unit_z()
     );
-    let sight = Sight::new(perspective, look);
+    let camera = Camera::new(perspective, view);
     let bindings = input::Bindings::default();
     let mut act_state = input::ActionState::default();
 
@@ -138,7 +138,7 @@ pub fn run<S: Show>(title: &str) -> Result<(), Box<dyn std::error::Error>> {
     let mut swap_chain = device.create_swap_chain(&surface, &desc);
 
     info!("Initializing the scene.");
-    let mut scene = S::init(&desc, &mut device, sight);
+    let mut scene = S::init(&desc, &mut device, camera);
 
     info!("Entering event loop.");
     let mut running = true;
@@ -160,8 +160,8 @@ pub fn run<S: Show>(title: &str) -> Result<(), Box<dyn std::error::Error>> {
                     let maybie = input::handle_keyboard(
                         &keyboard_input, &bindings, &mut act_state
                     );
-                    if let Some(eye_movement) = maybie {
-                        scene.update(eye_movement);
+                    if let Some(camera_movement) = maybie {
+                        scene.update(camera_movement);
                     }
                 },
                 _ => (),
