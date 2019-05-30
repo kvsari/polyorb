@@ -126,7 +126,8 @@ pub fn run<S: Show>(title: &str) -> Result<(), Box<dyn std::error::Error>> {
     );
     let camera = Camera::new(perspective, view);
     let bindings = input::Bindings::default();
-    let mut act_state = input::ActionState::default();
+    //let mut act_state = input::EnumActionState::default();
+    let mut act_state: u16 = 0;
 
     let surface = instance.create_surface(&window);
     let mut desc = wgpu::SwapChainDescriptor {

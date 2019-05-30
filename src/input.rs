@@ -16,15 +16,57 @@ pub enum Action {
     CameraMovePZ,
     CameraMoveNX,
     CameraMoveNY,
-    CameraMoveNZ,    
+    CameraMoveNZ,
+    RotateShapePX,
+    RotateShapePY,
+    RotateShapeNX,
+    RotateShapeNY,
+}
+
+impl Action {
+    pub fn bitset(&self) -> u16 {
+        match self {
+            Action::CameraMovePX =>  0b0000_0000_0000_0001,
+            Action::CameraMovePY =>  0b0000_0000_0000_0010,
+            Action::CameraMovePZ =>  0b0000_0000_0000_0100,
+            Action::CameraMoveNX =>  0b0000_0000_0001_0000,
+            Action::CameraMoveNY =>  0b0000_0000_0010_0000,
+            Action::CameraMoveNZ =>  0b0000_0000_0100_0000,
+            Action::RotateShapePX => 0b0000_0001_0000_0000,
+            Action::RotateShapePY => 0b0000_0010_0000_0000,
+            Action::RotateShapeNX => 0b0000_0100_0000_0000,
+            Action::RotateShapeNY => 0b0000_1000_0000_0000,
+        }
+    }
+
+    pub fn bitmask(&self) -> u16 {
+        match self {
+            Action::CameraMovePX =>  0b1111_1111_1111_1110,
+            Action::CameraMovePY =>  0b1111_1111_1111_1101,
+            Action::CameraMovePZ =>  0b1111_1111_1111_1011,
+            Action::CameraMoveNX =>  0b1111_1111_1110_1111,
+            Action::CameraMoveNY =>  0b1111_1111_1101_1111,
+            Action::CameraMoveNZ =>  0b1111_1111_1011_1111,
+            Action::RotateShapePX => 0b1111_1110_1111_1111,
+            Action::RotateShapePY => 0b1111_1101_1111_1111,
+            Action::RotateShapeNX => 0b1111_1011_1111_1111,
+            Action::RotateShapeNY => 0b1111_0111_1111_1111,
+        }
+    }
+}
+
+pub trait ActionState {
+    fn on(&mut self, action: Action);
+    fn off(&mut self, action: Action);
+    fn camera_increment(&self, increment: f32) -> Camera;
 }
 
 #[derive(Debug, Copy, Clone)]
-pub struct ActionState {
+pub struct EnumActionState {
     emap: EnumMap<Action, bool>,
 }
 
-impl ActionState {
+impl ActionState for EnumActionState{
     fn on(&mut self, action: Action) {
         self.emap[action] = true;
     }
@@ -32,33 +74,56 @@ impl ActionState {
     fn off(&mut self, action: Action) {
         self.emap[action] = false;
     }
+
+    fn camera_increment(&self, increment: f32) -> Camera {
+        self.emap
+            .iter()
+            .fold(Camera::zero(), |mut c, (a, s)| -> Camera {
+                match (a, s) {
+                    (Action::CameraMovePX, true) => c.x = increment,
+                    (Action::CameraMoveNX, true) => c.x = increment.neg(),
+                    (Action::CameraMovePY, true) => c.y = increment,
+                    (Action::CameraMoveNY, true) => c.y = increment.neg(),
+                    (Action::CameraMovePZ, true) => c.z = increment,
+                    (Action::CameraMoveNZ, true) => c.z = increment.neg(),
+                    _ => (),
+                }
+                c
+            })
+    }
 }
 
-impl Default for ActionState {
+impl Default for EnumActionState {
     fn default() -> Self {
         let mut emap = EnumMap::new();
         emap.iter_mut()
             .for_each(|(_, s)| *s = false);
         
-        ActionState { emap }
+        EnumActionState { emap }
     }
 }
 
-fn compute_camera(state: &ActionState, increment: f32) -> Camera {
-    state.emap
-        .iter()
-        .fold(Camera::zero(), |mut v, (a, s)| -> Camera {
-            match (a, s) {
-                (Action::CameraMovePX, true) => v.x = increment,
-                (Action::CameraMoveNX, true) => v.x = increment.neg(),
-                (Action::CameraMovePY, true) => v.y = increment,
-                (Action::CameraMoveNY, true) => v.y = increment.neg(),
-                (Action::CameraMovePZ, true) => v.z = increment,
-                (Action::CameraMoveNZ, true) => v.z = increment.neg(),
-                _ => (),
-            }
-            v
-        })
+impl ActionState for u16 {
+    fn on(&mut self, action: Action) {
+        *self |= action.bitset();
+    }
+
+    fn off(&mut self, action: Action) {
+        *self &= action.bitmask();
+    }
+
+    fn camera_increment(&self, increment: f32) -> Camera {
+        let mut camera = Camera::zero();
+
+        if *self & Action::CameraMovePX.bitset() > 0 { camera.x = increment; }
+        if *self & Action::CameraMoveNX.bitset() > 0 { camera.x = increment.neg(); }
+        if *self & Action::CameraMovePY.bitset() > 0 { camera.y = increment; }
+        if *self & Action::CameraMoveNY.bitset() > 0 { camera.y = increment.neg(); }
+        if *self & Action::CameraMovePZ.bitset() > 0 { camera.z = increment; }
+        if *self & Action::CameraMoveNZ.bitset() > 0 { camera.z = increment.neg(); }
+
+        camera
+    }
 }
 
 /// Which keypresses carry out which which actions and by how much.
@@ -96,8 +161,8 @@ impl Default for Bindings {
     }
 }
 
-pub fn handle_keyboard(
-    event: &KeyboardInput, bindings: &Bindings, state: &mut ActionState,
+pub fn handle_keyboard<T: ActionState>(
+    event: &KeyboardInput, bindings: &Bindings, state: &mut T,
 ) -> Option<Camera> {
     let ci = bindings.camera_increment;
     let vkc = event.virtual_keycode
@@ -110,7 +175,7 @@ pub fn handle_keyboard(
                 ElementState::Pressed => state.on(*action),
                 ElementState::Released => state.off(*action),
             }
-            compute_camera(state, ci)
+            state.camera_increment(ci)
         })
 }
 
