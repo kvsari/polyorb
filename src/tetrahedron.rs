@@ -6,7 +6,7 @@ use shaderc::ShaderKind;
 use cgmath::{Point2, Basis2, Rotation, Rotation2, Vector3};
 use wgpu::winit::{WindowEvent, KeyboardInput};
 
-use crate::show::{Show, Camera, load_shader, common::*};
+use crate::show::{Show, Camera, View, load_shader, common::*};
 use crate::shape::{square, equilateral_triangle};
 
 static deg60: cgmath::Deg<f32> = cgmath::Deg(60_f32);
@@ -187,8 +187,8 @@ impl Show for Scene {
 
     fn resize(&mut self, desc: &wgpu::SwapChainDescriptor, device: &mut wgpu::Device) { }
     
-    fn update(&mut self, camera_movement: Vector3<f32>) {
-        self.camera.move_camera(camera_movement);
+    fn update(&mut self, camera_movement: Vector3<f32>) -> &View<f32> {
+        self.camera.move_camera(camera_movement)
     }
     
     fn render(&mut self, frame: &wgpu::SwapChainOutput, device: &mut wgpu::Device) {

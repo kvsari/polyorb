@@ -1,7 +1,7 @@
 //! Scene traits and running
-use std::{path, fs};
+use std::{path, fs, fmt};
 
-use log::info;
+use log::{trace, info};
 use cgmath::{Deg, Rad, Matrix4, Point3, Vector3, BaseFloat};
 use wgpu::winit::{self, Event};
 use shaderc::ShaderKind;
@@ -80,8 +80,10 @@ impl<S: BaseFloat> Camera<S> {
         self.perspective.as_matrix() * self.view.as_matrix()
     }
 
-    pub fn move_camera(&mut self, increment: Vector3<S>) {
+    /// Move the camera position by the supplied increment and return a ref to the view.
+    pub fn move_camera(&mut self, increment: Vector3<S>) -> &View<S> {
         self.view.move_camera(increment);
+        &self.view
     }
 }
 
@@ -91,7 +93,7 @@ pub trait Show {
         desc: &wgpu::SwapChainDescriptor, device: &mut wgpu::Device, camera: Camera<f32>,
     ) -> Self;
     fn resize(&mut self, desc: &wgpu::SwapChainDescriptor, device: &mut wgpu::Device);
-    fn update(&mut self, camera_movement: Vector3<f32>);
+    fn update(&mut self, camera_movement: Vector3<f32>) -> &View<f32>;
     fn render(&mut self, frame: &wgpu::SwapChainOutput, device: &mut wgpu::Device);
 }
 
@@ -122,7 +124,7 @@ pub fn run<S: Show>(title: &str) -> Result<(), Box<dyn std::error::Error>> {
 
     let perspective = Perspective::new(Deg(45f32), w_width / w_height, 1f32, 10f32);
     let view = View::new(
-        Point3::new(1f32, 0f32, 1f32), Point3::new(0f32, 0f32, 0f32), -Vector3::unit_z()
+        Point3::new(0f32, -1f32, -1f32), Point3::new(0f32, 0f32, 0f32), -Vector3::unit_z()
     );
     let camera = Camera::new(perspective, view);
     let bindings = input::Bindings::default();
@@ -162,7 +164,8 @@ pub fn run<S: Show>(title: &str) -> Result<(), Box<dyn std::error::Error>> {
                         &keyboard_input, &bindings, &mut act_state
                     );
                     if let Some(camera_movement) = maybie {
-                        scene.update(camera_movement);
+                        let view = scene.update(camera_movement);
+                        trace!("{:?}", view);
                     }
                 },
                 _ => (),

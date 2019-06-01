@@ -5,9 +5,31 @@ use std::ops::Neg;
 
 use enum_map::{Enum, EnumMap};
 use wgpu::winit::{KeyboardInput, VirtualKeyCode, ElementState};
-use cgmath::{Vector3, Zero};
+use cgmath::{Vector3, Zero, Rad, Deg};
 
 pub type Camera = Vector3<f32>;
+
+static SET_CMPX: u16 = 0b0000_0000_0000_0001;
+static SET_CMPY: u16 = 0b0000_0000_0000_0010;
+static SET_CMPZ: u16 = 0b0000_0000_0000_0100;
+static SET_CMNX: u16 = 0b0000_0000_0001_0000;
+static SET_CMNY: u16 = 0b0000_0000_0010_0000;
+static SET_CMNZ: u16 = 0b0000_0000_0100_0000;
+static SET_RSPX: u16 = 0b0000_0001_0000_0000;
+static SET_RSPY: u16 = 0b0000_0010_0000_0000;
+static SET_RSNX: u16 = 0b0000_0100_0000_0000;
+static SET_RSNY: u16 = 0b0000_1000_0000_0000;
+
+static MSK_CMPX: u16 = 0b1111_1111_1111_1110;
+static MSK_CMPY: u16 = 0b1111_1111_1111_1101;
+static MSK_CMPZ: u16 = 0b1111_1111_1111_1011;
+static MSK_CMNX: u16 = 0b1111_1111_1110_1111;
+static MSK_CMNY: u16 = 0b1111_1111_1101_1111;
+static MSK_CMNZ: u16 = 0b1111_1111_1011_1111;
+static MSK_RSPX: u16 = 0b1111_1110_1111_1111;
+static MSK_RSPY: u16 = 0b1111_1101_1111_1111;
+static MSK_RSNX: u16 = 0b1111_1011_1111_1111;
+static MSK_RSNY: u16 = 0b1111_0111_1111_1111;
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, Enum)]
 pub enum Action {
@@ -26,31 +48,31 @@ pub enum Action {
 impl Action {
     pub fn bitset(&self) -> u16 {
         match self {
-            Action::CameraMovePX =>  0b0000_0000_0000_0001,
-            Action::CameraMovePY =>  0b0000_0000_0000_0010,
-            Action::CameraMovePZ =>  0b0000_0000_0000_0100,
-            Action::CameraMoveNX =>  0b0000_0000_0001_0000,
-            Action::CameraMoveNY =>  0b0000_0000_0010_0000,
-            Action::CameraMoveNZ =>  0b0000_0000_0100_0000,
-            Action::RotateShapePX => 0b0000_0001_0000_0000,
-            Action::RotateShapePY => 0b0000_0010_0000_0000,
-            Action::RotateShapeNX => 0b0000_0100_0000_0000,
-            Action::RotateShapeNY => 0b0000_1000_0000_0000,
+            Action::CameraMovePX =>  SET_CMPX,
+            Action::CameraMovePY =>  SET_CMPY,
+            Action::CameraMovePZ =>  SET_CMPZ,
+            Action::CameraMoveNX =>  SET_CMNX,
+            Action::CameraMoveNY =>  SET_CMNY,
+            Action::CameraMoveNZ =>  SET_CMNZ,
+            Action::RotateShapePX => SET_RSPX,
+            Action::RotateShapePY => SET_RSPY,
+            Action::RotateShapeNX => SET_RSNX,
+            Action::RotateShapeNY => SET_RSNY,
         }
     }
 
     pub fn bitmask(&self) -> u16 {
         match self {
-            Action::CameraMovePX =>  0b1111_1111_1111_1110,
-            Action::CameraMovePY =>  0b1111_1111_1111_1101,
-            Action::CameraMovePZ =>  0b1111_1111_1111_1011,
-            Action::CameraMoveNX =>  0b1111_1111_1110_1111,
-            Action::CameraMoveNY =>  0b1111_1111_1101_1111,
-            Action::CameraMoveNZ =>  0b1111_1111_1011_1111,
-            Action::RotateShapePX => 0b1111_1110_1111_1111,
-            Action::RotateShapePY => 0b1111_1101_1111_1111,
-            Action::RotateShapeNX => 0b1111_1011_1111_1111,
-            Action::RotateShapeNY => 0b1111_0111_1111_1111,
+            Action::CameraMovePX =>  MSK_CMPX,
+            Action::CameraMovePY =>  MSK_CMPY,
+            Action::CameraMovePZ =>  MSK_CMPZ,
+            Action::CameraMoveNX =>  MSK_CMNX,
+            Action::CameraMoveNY =>  MSK_CMNY,
+            Action::CameraMoveNZ =>  MSK_CMNZ,
+            Action::RotateShapePX => MSK_RSPX,
+            Action::RotateShapePY => MSK_RSPY,
+            Action::RotateShapeNX => MSK_RSNX,
+            Action::RotateShapeNY => MSK_RSNY,
         }
     }
 }
@@ -59,48 +81,8 @@ pub trait ActionState {
     fn on(&mut self, action: Action);
     fn off(&mut self, action: Action);
     fn camera_increment(&self, increment: f32) -> Camera;
-}
-
-#[derive(Debug, Copy, Clone)]
-pub struct EnumActionState {
-    emap: EnumMap<Action, bool>,
-}
-
-impl ActionState for EnumActionState{
-    fn on(&mut self, action: Action) {
-        self.emap[action] = true;
-    }
-
-    fn off(&mut self, action: Action) {
-        self.emap[action] = false;
-    }
-
-    fn camera_increment(&self, increment: f32) -> Camera {
-        self.emap
-            .iter()
-            .fold(Camera::zero(), |mut c, (a, s)| -> Camera {
-                match (a, s) {
-                    (Action::CameraMovePX, true) => c.x = increment,
-                    (Action::CameraMoveNX, true) => c.x = increment.neg(),
-                    (Action::CameraMovePY, true) => c.y = increment,
-                    (Action::CameraMoveNY, true) => c.y = increment.neg(),
-                    (Action::CameraMovePZ, true) => c.z = increment,
-                    (Action::CameraMoveNZ, true) => c.z = increment.neg(),
-                    _ => (),
-                }
-                c
-            })
-    }
-}
-
-impl Default for EnumActionState {
-    fn default() -> Self {
-        let mut emap = EnumMap::new();
-        emap.iter_mut()
-            .for_each(|(_, s)| *s = false);
-        
-        EnumActionState { emap }
-    }
+    fn x_rotation_increment(&self, increment: f32) -> Rad<f32>;
+    fn y_rotation_increment(&self, increment: f32) -> Rad<f32>;
 }
 
 impl ActionState for u16 {
@@ -115,14 +97,28 @@ impl ActionState for u16 {
     fn camera_increment(&self, increment: f32) -> Camera {
         let mut camera = Camera::zero();
 
-        if *self & Action::CameraMovePX.bitset() > 0 { camera.x = increment; }
-        if *self & Action::CameraMoveNX.bitset() > 0 { camera.x = increment.neg(); }
-        if *self & Action::CameraMovePY.bitset() > 0 { camera.y = increment; }
-        if *self & Action::CameraMoveNY.bitset() > 0 { camera.y = increment.neg(); }
-        if *self & Action::CameraMovePZ.bitset() > 0 { camera.z = increment; }
-        if *self & Action::CameraMoveNZ.bitset() > 0 { camera.z = increment.neg(); }
+        if *self & SET_CMPX > 0 { camera.x = increment; }
+        if *self & SET_CMNX > 0 { camera.x = increment.neg(); }
+        if *self & SET_CMPY > 0 { camera.y = increment; }
+        if *self & SET_CMNY > 0 { camera.y = increment.neg(); }
+        if *self & SET_CMPZ > 0 { camera.z = increment; }
+        if *self & SET_CMNZ > 0 { camera.z = increment.neg(); }
 
         camera
+    }
+
+    fn x_rotation_increment(&self, increment: f32) -> Rad<f32> {
+        if *self & SET_RSPX > 0 { return Deg(increment).into() }
+        if *self & SET_RSNX > 0 { return Deg(increment.neg()).into() }
+
+        Rad(0f32)
+    }
+
+    fn y_rotation_increment(&self, increment: f32) -> Rad<f32> {
+        if *self & SET_RSPY > 0 { return Deg(increment).into() }
+        if *self & SET_RSNY > 0 { return Deg(increment.neg()).into() }
+
+        Rad(0f32)
     }
 }
 
