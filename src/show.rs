@@ -128,7 +128,6 @@ pub fn run<S: Show>(title: &str) -> Result<(), Box<dyn std::error::Error>> {
     );
     let camera = Camera::new(perspective, view);
     let bindings = input::Bindings::default();
-    //let mut act_state = input::EnumActionState::default();
     let mut act_state: u16 = 0;
 
     let surface = instance.create_surface(&window);
@@ -163,9 +162,9 @@ pub fn run<S: Show>(title: &str) -> Result<(), Box<dyn std::error::Error>> {
                     let maybie = input::handle_keyboard(
                         &keyboard_input, &bindings, &mut act_state
                     );
-                    if let Some(camera_movement) = maybie {
+                    if let Some((camera_movement, rot_y)) = maybie {
                         let view = scene.update(camera_movement);
-                        trace!("{:?}", view);
+                        trace!("{:?} && {:?}", view, &rot_y);
                     }
                 },
                 _ => (),

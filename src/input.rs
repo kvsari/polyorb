@@ -8,6 +8,8 @@ use wgpu::winit::{KeyboardInput, VirtualKeyCode, ElementState};
 use cgmath::{Vector3, Zero, Rad, Deg};
 
 pub type Camera = Vector3<f32>;
+pub type RotY = Rad<f32>;
+pub type RotX = Rad<f32>;
 
 static SET_CMPX: u16 = 0b0000_0000_0000_0001;
 static SET_CMPY: u16 = 0b0000_0000_0000_0010;
@@ -107,14 +109,14 @@ impl ActionState for u16 {
         camera
     }
 
-    fn x_rotation_increment(&self, increment: f32) -> Rad<f32> {
+    fn x_rotation_increment(&self, increment: f32) -> RotX {
         if *self & SET_RSPX > 0 { return Deg(increment).into() }
         if *self & SET_RSNX > 0 { return Deg(increment.neg()).into() }
 
         Rad(0f32)
     }
 
-    fn y_rotation_increment(&self, increment: f32) -> Rad<f32> {
+    fn y_rotation_increment(&self, increment: f32) -> RotY {
         if *self & SET_RSPY > 0 { return Deg(increment).into() }
         if *self & SET_RSNY > 0 { return Deg(increment.neg()).into() }
 
@@ -126,13 +128,15 @@ impl ActionState for u16 {
 pub struct Bindings {
     bindings: HashMap<VirtualKeyCode, Action>,
     camera_increment: f32,
+    rotation_increment: f32,
 }
 
 impl Bindings {
-    pub fn new(camera_increment: f32) -> Self {
+    pub fn new(camera_increment: f32, rotation_increment: f32) -> Self {
         Bindings {
             bindings: HashMap::new(),
             camera_increment,
+            rotation_increment,
         }
     }
 
@@ -147,11 +151,13 @@ impl Bindings {
 
 impl Default for Bindings {
     fn default() -> Self {
-        let mut bindings = Bindings::new(0.1f32);
+        let mut bindings = Bindings::new(0.1f32, 0.05f32);        
         bindings.bind(VirtualKeyCode::W, Action::CameraMoveNY);
         bindings.bind(VirtualKeyCode::S, Action::CameraMovePY);
         bindings.bind(VirtualKeyCode::A, Action::CameraMovePX);
         bindings.bind(VirtualKeyCode::D, Action::CameraMoveNX);
+        bindings.bind(VirtualKeyCode::Left, Action::RotateShapePY);
+        bindings.bind(VirtualKeyCode::Right, Action::RotateShapeNY);
 
         bindings
     }
@@ -159,8 +165,9 @@ impl Default for Bindings {
 
 pub fn handle_keyboard<T: ActionState>(
     event: &KeyboardInput, bindings: &Bindings, state: &mut T,
-) -> Option<Camera> {
+) -> Option<(Camera, RotY)> {
     let ci = bindings.camera_increment;
+    let ri = bindings.rotation_increment;
     let vkc = event.virtual_keycode
         .unwrap_or(VirtualKeyCode::Escape); // Escape is already caught beforehand.
 
@@ -171,7 +178,7 @@ pub fn handle_keyboard<T: ActionState>(
                 ElementState::Pressed => state.on(*action),
                 ElementState::Released => state.off(*action),
             }
-            state.camera_increment(ci)
+            (state.camera_increment(ci), state.y_rotation_increment(ri))
         })
 }
 
