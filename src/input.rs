@@ -3,7 +3,6 @@
 use std::collections::HashMap;
 use std::ops::Neg;
 
-use enum_map::{Enum, EnumMap};
 use wgpu::winit::{KeyboardInput, VirtualKeyCode, ElementState};
 use cgmath::{Vector3, Zero, Rad, Deg};
 
@@ -33,7 +32,7 @@ static MSK_RSPY: u16 = 0b1111_1101_1111_1111;
 static MSK_RSNX: u16 = 0b1111_1011_1111_1111;
 static MSK_RSNY: u16 = 0b1111_0111_1111_1111;
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, Enum)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 pub enum Action {
     CameraMovePX,
     CameraMovePY,

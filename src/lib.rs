@@ -1,11 +1,6 @@
 //! # Polyorb
 //!
 //! Render various Goldberg polyhedrons.
-use std::{path, io, fs};
-
-use log::info;
-use wgpu::winit::{self, Event};
-use shaderc::ShaderKind;
 
 pub mod show;
 pub mod input;

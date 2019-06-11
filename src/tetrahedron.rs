@@ -3,7 +3,7 @@
 use std::mem;
 
 use shaderc::ShaderKind;
-use cgmath::{Point2, Basis2, Rotation, Rotation2, Vector3};
+use cgmath::{Point2, Basis2, Rotation, Rotation2, Vector3, Rad};
 use wgpu::winit::{WindowEvent, KeyboardInput};
 
 use crate::show::{Show, Camera, View, load_shader, common::*};
@@ -50,25 +50,34 @@ fn gen_shape_02(side_len: f32, colour: [f32; 3]) -> (Vec<Vertex>, Vec<u16>) {
 pub struct Scene {
     bind_group: wgpu::BindGroup,
     pipeline: wgpu::RenderPipeline,
-    uniform_buf: wgpu::Buffer,
+    projection_buf: wgpu::Buffer,
     vertex_buf: wgpu::Buffer,
     index_buf: wgpu::Buffer,    
     index_len: usize,
     camera: Camera<f32>,
+    y_rotation: Rad<f32>,
 }
 
 impl Scene {
     fn new(
         bind_group: wgpu::BindGroup,
         pipeline: wgpu::RenderPipeline,
-        uniform_buf: wgpu::Buffer,
+        projection_buf: wgpu::Buffer,
         vertex_buf: wgpu::Buffer,
         index_buf: wgpu::Buffer,
         index_len: usize,
         camera: Camera<f32>,
+        y_rotation: Rad<f32>,
     ) -> Self {
         Scene {
-            bind_group, pipeline, uniform_buf, vertex_buf, index_buf, index_len, camera,
+            bind_group,
+            pipeline,
+            projection_buf,
+            vertex_buf,
+            index_buf,
+            index_len,
+            camera,
+            y_rotation,
         }
     }
 }
@@ -88,12 +97,14 @@ impl Show for Scene {
 
         let projection = camera.projection();
         let p_ref: &[f32; 16] = projection.as_ref();
-        let uniform_buf = device
+        let projection_buf = device
             .create_buffer_mapped(
                 16,
                 wgpu::BufferUsageFlags::UNIFORM | wgpu::BufferUsageFlags::TRANSFER_DST,
             )
             .fill_from_slice(p_ref);
+
+        // Add rotation uniform buffer here (like the projection uniform buffer)
 
         let (vertexes, indexes) = gen_shape_01(1f32, [1.0, 0.0, 0.0]);
         let vertex_buf = device
@@ -106,11 +117,13 @@ impl Show for Scene {
 
         let bg_layout = device.create_bind_group_layout(
             &wgpu::BindGroupLayoutDescriptor { bindings: &[
+                // Projection uniform buffer layout
                 wgpu::BindGroupLayoutBinding {
                     binding: 0,
                     visibility: wgpu::ShaderStageFlags::VERTEX,
                     ty: wgpu::BindingType::UniformBuffer,
                 }
+                // Add the rotation uniform buffer layout below.
             ]}            
         );
 
@@ -121,15 +134,16 @@ impl Show for Scene {
         let bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
             layout: &bg_layout,
             bindings: &[
+                // Projection uniform buffer binding
                 wgpu::Binding {
                     binding: 0,
                     resource: wgpu::BindingResource::Buffer {
-                        //buffer: &vertex_buf,
-                        buffer: &uniform_buf,
-                        //range: 0..18,
+                        buffer: &projection_buf,
                         range: 0..64,
                     }
-                }
+                },
+                
+                // Add the rotation uniform buffer binding below.
             ],
         });
 
@@ -163,12 +177,15 @@ impl Show for Scene {
                 stride: Vertex::sizeof() as u32,
                 step_mode: wgpu::InputStepMode::Vertex,
                 attributes: &[
-                    wgpu::VertexAttributeDescriptor {
+                    // These are the vertexes. Location 0.
+                    wgpu::VertexAttributeDescriptor { 
                         attribute_index: 0,
                         format: wgpu::VertexFormat::Float3,
                         offset: 0,
                     },
-                    wgpu::VertexAttributeDescriptor {
+                    
+                    // This is the colour. Location 1.
+                    wgpu::VertexAttributeDescriptor { 
                         attribute_index: 1,
                         format: wgpu::VertexFormat::Float3,
                         offset: 4 * 3,
@@ -181,7 +198,14 @@ impl Show for Scene {
         let cmd_buf = cmd_encoder.finish();
         device.get_queue().submit(&[cmd_buf]);
         Scene::new(
-            bind_group, pipeline, uniform_buf, vertex_buf, index_buf, indexes.len(), camera,
+            bind_group,
+            pipeline,
+            projection_buf,
+            vertex_buf,
+            index_buf,
+            indexes.len(),
+            camera,
+            Rad(0f32),
         )
     }
 
@@ -198,7 +222,7 @@ impl Show for Scene {
         {
             let projection = self.camera.projection();
             let p_ref: &[f32; 16] = projection.as_ref();
-            let new_uniform_buf = device
+            let new_projection_buf = device
                 .create_buffer_mapped(
                     16,
                     wgpu::BufferUsageFlags::UNIFORM | wgpu::BufferUsageFlags::TRANSFER_SRC,
@@ -206,7 +230,7 @@ impl Show for Scene {
                 .fill_from_slice(p_ref);
             
             encoder.copy_buffer_to_buffer(
-                &new_uniform_buf, 0, &self.uniform_buf, 0, 16 * 4
+                &new_projection_buf, 0, &self.projection_buf, 0, 16 * 4
             );
         }
 

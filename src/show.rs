@@ -1,12 +1,12 @@
 //! Scene traits and running
-use std::{path, fs, fmt};
+use std::{path, fs};
 
 use log::{trace, info};
 use cgmath::{Deg, Rad, Matrix4, Point3, Vector3, BaseFloat};
 use wgpu::winit::{self, Event};
 use shaderc::ShaderKind;
 
-use crate::input::{self, handle_keyboard};
+use crate::input;
 
 pub fn load_shader(
     name: &str, entry: &str, kind: ShaderKind
