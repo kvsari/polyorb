@@ -3,8 +3,7 @@
 use std::mem;
 
 use shaderc::ShaderKind;
-use cgmath::{Point2, Basis2, Rotation, Rotation2, Vector3, Rad};
-use wgpu::winit::{WindowEvent, KeyboardInput};
+use cgmath::{Matrix4, Vector3, Rad};
 
 use crate::show::{Show, Camera, View, load_shader, common::*};
 use crate::shape::{square, equilateral_triangle};
@@ -51,6 +50,7 @@ pub struct Scene {
     bind_group: wgpu::BindGroup,
     pipeline: wgpu::RenderPipeline,
     projection_buf: wgpu::Buffer,
+    rotation_buf: wgpu::Buffer,
     vertex_buf: wgpu::Buffer,
     index_buf: wgpu::Buffer,    
     index_len: usize,
@@ -63,6 +63,7 @@ impl Scene {
         bind_group: wgpu::BindGroup,
         pipeline: wgpu::RenderPipeline,
         projection_buf: wgpu::Buffer,
+        rotation_buf: wgpu::Buffer,
         vertex_buf: wgpu::Buffer,
         index_buf: wgpu::Buffer,
         index_len: usize,
@@ -73,6 +74,7 @@ impl Scene {
             bind_group,
             pipeline,
             projection_buf,
+            rotation_buf,
             vertex_buf,
             index_buf,
             index_len,
@@ -105,7 +107,15 @@ impl Show for Scene {
             .fill_from_slice(p_ref);
 
         // Add rotation uniform buffer here (like the projection uniform buffer)
-
+        let rotation = Matrix4::from_angle_y(Rad(0f32));
+        let r_ref: &[f32; 16] = rotation.as_ref();
+        let rotation_buf = device
+            .create_buffer_mapped(
+                16,
+                wgpu::BufferUsageFlags::UNIFORM | wgpu::BufferUsageFlags::TRANSFER_DST,
+            )
+            .fill_from_slice(r_ref);
+                
         let (vertexes, indexes) = gen_shape_01(1f32, [1.0, 0.0, 0.0]);
         let vertex_buf = device
             .create_buffer_mapped(vertexes.len(), wgpu::BufferUsageFlags::VERTEX)
@@ -122,8 +132,14 @@ impl Show for Scene {
                     binding: 0,
                     visibility: wgpu::ShaderStageFlags::VERTEX,
                     ty: wgpu::BindingType::UniformBuffer,
-                }
-                // Add the rotation uniform buffer layout below.
+                },
+                
+                // Rotation uniform buffer layout
+                wgpu::BindGroupLayoutBinding {
+                    binding: 1,
+                    visibility: wgpu::ShaderStageFlags::VERTEX,
+                    ty: wgpu::BindingType::UniformBuffer,
+                },
             ]}            
         );
 
@@ -143,7 +159,14 @@ impl Show for Scene {
                     }
                 },
                 
-                // Add the rotation uniform buffer binding below.
+                // Rotation uniform buffer binding
+                wgpu::Binding {
+                    binding: 1,
+                    resource: wgpu::BindingResource::Buffer {
+                        buffer: &rotation_buf,
+                        range: 0..64
+                    }
+                },
             ],
         });
 
@@ -201,6 +224,7 @@ impl Show for Scene {
             bind_group,
             pipeline,
             projection_buf,
+            rotation_buf,
             vertex_buf,
             index_buf,
             indexes.len(),
@@ -211,8 +235,11 @@ impl Show for Scene {
 
     fn resize(&mut self, desc: &wgpu::SwapChainDescriptor, device: &mut wgpu::Device) { }
     
-    fn update(&mut self, camera_movement: Vector3<f32>) -> &View<f32> {
-        self.camera.move_camera(camera_movement)
+    fn update(
+        &mut self, camera_movement: Vector3<f32>, y_rot_inc: Rad<f32>
+    ) -> (&View<f32>, &Rad<f32>) {
+        self.y_rotation += y_rot_inc;
+        (self.camera.move_camera(camera_movement), &self.y_rotation)
     }
     
     fn render(&mut self, frame: &wgpu::SwapChainOutput, device: &mut wgpu::Device) {
@@ -231,6 +258,22 @@ impl Show for Scene {
             
             encoder.copy_buffer_to_buffer(
                 &new_projection_buf, 0, &self.projection_buf, 0, 16 * 4
+            );
+        }
+
+        // Ditto with the rotation
+        {
+            let rotation = Matrix4::from_angle_y(self.y_rotation);
+            let r_ref: &[f32; 16] = rotation.as_ref();
+            let new_rotation_buf = device
+                .create_buffer_mapped(
+                    16,
+                    wgpu::BufferUsageFlags::UNIFORM | wgpu::BufferUsageFlags::TRANSFER_SRC,
+                )
+                .fill_from_slice(r_ref);
+
+            encoder.copy_buffer_to_buffer(
+                &new_rotation_buf, 0, &self.rotation_buf, 0, 16 * 4
             );
         }
 

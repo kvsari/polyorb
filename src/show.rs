@@ -93,7 +93,9 @@ pub trait Show {
         desc: &wgpu::SwapChainDescriptor, device: &mut wgpu::Device, camera: Camera<f32>,
     ) -> Self;
     fn resize(&mut self, desc: &wgpu::SwapChainDescriptor, device: &mut wgpu::Device);
-    fn update(&mut self, camera_movement: Vector3<f32>) -> &View<f32>;
+    fn update(
+        &mut self, camera_movement: Vector3<f32>, y_rot_inc: Rad<f32>
+    ) -> (&View<f32>, &Rad<f32>);
     fn render(&mut self, frame: &wgpu::SwapChainOutput, device: &mut wgpu::Device);
 }
 
@@ -163,8 +165,8 @@ pub fn run<S: Show>(title: &str) -> Result<(), Box<dyn std::error::Error>> {
                         &keyboard_input, &bindings, &mut act_state
                     );
                     if let Some((camera_movement, rot_y)) = maybie {
-                        let view = scene.update(camera_movement);
-                        trace!("{:?} && {:?}", view, &rot_y);
+                        let (view, tot_rot) = scene.update(camera_movement, rot_y);
+                        trace!("{:?} && {:?}", view, tot_rot);
                     }
                 },
                 _ => (),
