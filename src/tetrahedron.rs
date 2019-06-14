@@ -3,10 +3,10 @@
 use std::mem;
 
 use shaderc::ShaderKind;
-use cgmath::{Matrix4, Vector3, Rad};
+use cgmath::{Matrix4, Vector3, Point3, Rad};
 
 use crate::show::{Show, Camera, View, load_shader, common::*};
-use crate::shape::{square, equilateral_triangle};
+use crate::shape;
 
 static deg60: cgmath::Deg<f32> = cgmath::Deg(60_f32);
 
@@ -27,7 +27,7 @@ impl Vertex {
 }
 
 fn gen_shape_01(side_len: f32, colour: [f32; 3]) -> (Vec<Vertex>, Vec<u16>) {
-    let (points, index) = equilateral_triangle(side_len);
+    let (points, index) = shape::equilateral_triangle(side_len);
     let vertexes = points
         .into_iter()
         .map(|p| Vertex::new([p.x, p.y, 0_f32], colour))
@@ -37,13 +37,20 @@ fn gen_shape_01(side_len: f32, colour: [f32; 3]) -> (Vec<Vertex>, Vec<u16>) {
 }
 
 fn gen_shape_02(side_len: f32, colour: [f32; 3]) -> (Vec<Vertex>, Vec<u16>) {
-    let (points, index) = square(side_len);
+    let (points, index) = shape::square(side_len);
     let vertexes = points
         .into_iter()
         .map(|p| Vertex::new([p.x, p.y, 0_f32], colour))
         .collect();
 
     (vertexes, index.to_vec())
+}
+
+fn convert_to_vertexes(points: &[Point3<f32>], colour: [f32; 3]) -> Vec<Vertex> {
+    points
+        .into_iter()
+        .map(|p| Vertex::new([p.x, p.y, p.z], colour))
+        .collect()
 }
 
 pub struct Scene {
@@ -116,7 +123,11 @@ impl Show for Scene {
             )
             .fill_from_slice(r_ref);
                 
-        let (vertexes, indexes) = gen_shape_01(1f32, [1.0, 0.0, 0.0]);
+        //let (vertexes, indexes) = gen_shape_01(1f32, [1.0, 0.0, 0.0]);
+        //let (points, indexes) = shape::cube_02();
+        let (points, indexes) = shape::tetrahedron(1f32);
+        let vertexes = convert_to_vertexes(&points, [0.0, 1.0, 0.0]);
+        
         let vertex_buf = device
             .create_buffer_mapped(vertexes.len(), wgpu::BufferUsageFlags::VERTEX)
             .fill_from_slice(&vertexes);

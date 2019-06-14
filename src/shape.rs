@@ -1,26 +1,39 @@
 //! Various 2d shapes used as building blocks for solids.
 use std::ops::Neg;
 
-use cgmath::Point2;
+use cgmath::{Point2, Point3};
 
 /// Create an equilateral triangle centered on (0, 0). It's up to consumers to
 /// translate/scale/rotate the triangle for their needs.
 ///
 /// First value in the tuple are the 2D points. Second value is the index order.
 pub fn equilateral_triangle(len: f32) -> ([Point2<f32>; 3], [u16; 3]) {
-    // Use the hypotenuse to figure out the tip.
-    let x = len / 2f32;
-    let h = len;
-    let x2 = x.exp2();
-    let h2 = h.exp2();
-    let y2 = h2 - x2;
-    let y = y2.sqrt() / 2f32;
-    
-    let p1: Point2<f32> = (x.neg(), y).into();
-    let p2: Point2<f32> = (x, y).into();    
-    let p3: Point2<f32> = (0f32, y.neg()).into();
+    // Use the hypotenuse to figure out the tip and compute the center point.
+    // All calculations are using the X coordinate. The bottom of the triangle.
 
-    ([p1, p2, p3], [0, 1, 2])
+    // Setup out starting values
+    let plot_x = len / 2f32;  // We want the triangle centered on the Y coord.
+    let ra_x = plot_x;        // Right angle triangle X. Same length as the `plot_x`.
+    let ra_hypotenuse = len;  // Right angle triangle hypotenuse.
+
+    // Carry out reverse hypotenuse to get the triangle height.
+    let ra_x2 = ra_x.exp2();
+    let ra_hypotenuse2 = ra_hypotenuse.exp2();
+    let ra_height2 = ra_hypotenuse2 - ra_x2;
+    let ra_height = ra_height2.sqrt();
+
+    // Get out Y coordinates
+    let center = ra_height / 3f32;                // The center point is 1/3 of the height
+    let outer_radius = (ra_height * 2f32) / 3f32; // The outer radius is 2/3 of the height
+
+    // Our equilateral triangle
+    let points = [
+        Point2::new(plot_x.neg(), center.neg()), // Left
+        Point2::new(plot_x, center.neg()),       // Right
+        Point2::new(0f32, outer_radius),       // Top
+    ];
+
+    (points, [0, 1, 2])
 }
 
 pub fn square(len: f32) -> ([Point2<f32>; 4], [u16; 6]) {
@@ -33,6 +46,121 @@ pub fn square(len: f32) -> ([Point2<f32>; 4], [u16; 6]) {
     ];
 
     (points, [0, 1, 2, 2, 3, 0])
+}
+
+pub fn cube_01() -> ([Point3<f32>; 24], [u16; 36]) {
+    let points = [
+        // top (0, 0, 1)
+        Point3::new(-1f32, -1f32, 1f32),
+        Point3::new(1f32, -1f32, 1f32),
+        Point3::new(1f32, 1f32, 1f32),
+        Point3::new(-1f32, 1f32, 1f32),
+        
+        // bottom (0, 0, -1)
+        Point3::new(-1f32, 1f32, -1f32),
+        Point3::new(1f32, 1f32, -1f32),
+        Point3::new(1f32, -1f32, -1f32),
+        Point3::new(-1f32, -1f32, -1f32),
+        
+        // right (1, 0, 0)
+        Point3::new(1f32, -1f32, -1f32),
+        Point3::new(1f32, 1f32, -1f32),
+        Point3::new(1f32, 1f32, 1f32),
+        Point3::new(1f32, -1f32, 1f32),
+        
+        // left (-1, 0, 0)
+        Point3::new(-1f32, -1f32, 1f32),
+        Point3::new(-1f32, 1f32, 1f32),
+        Point3::new(-1f32, 1f32, -1f32),
+        Point3::new(-1f32, -1f32, -1f32),
+        
+        // front (0, 1, 0)
+        Point3::new(1f32, 1f32, -1f32),
+        Point3::new(-1f32, 1f32, -1f32),
+        Point3::new(-1f32, 1f32, 1f32),
+        Point3::new(1f32, 1f32, 1f32),
+        
+        // back (0, -1, 0)
+        Point3::new(1f32, -1f32, 1f32),
+        Point3::new(-1f32, -1f32, 1f32),
+        Point3::new(-1f32, -1f32, -1f32),
+        Point3::new(1f32, -1f32, -1f32),
+    ];
+
+    let indexes = [
+        0, 1, 2, 2, 3, 0, // top
+        4, 5, 6, 6, 7, 4, // bottom
+        8, 9, 10, 10, 11, 8, // right
+        12, 13, 14, 14, 15, 12, // left
+        16, 17, 18, 18, 19, 16, // front
+        20, 21, 22, 22, 23, 20, // back
+    ];
+
+    (points, indexes)
+}
+
+pub fn cube_02() -> ([Point3<f32>; 8], [u16; 36]) {
+    let points = [
+        // Front
+        Point3::new(-1f32, -1f32, 1f32), // 1 (0)
+        Point3::new(1f32, -1f32, 1f32),  // 2 (1)
+        Point3::new(1f32, 1f32, 1f32),   // 3 (2)
+        Point3::new(-1f32, 1f32, 1f32),  // 4 (3)
+        
+        // Back
+        Point3::new(-1f32, -1f32, -1f32),// 5 (4) 
+        Point3::new(1f32, -1f32, -1f32), // 6 (5)
+        Point3::new(1f32, 1f32, -1f32),  // 7 (6)
+        Point3::new(-1f32, 1f32, -1f32), // 8 (7)
+    ];
+
+    let indexes = [
+        0, 1, 2, 2, 3, 0, // Front
+        4, 5, 6, 6, 7, 4, // Back
+        4, 3, 7, 7, 8, 4, // Top
+        0, 1, 5, 5, 4, 0, // Bottom
+        4, 0, 3, 3, 7, 4, // Left
+        5, 1, 2, 2, 6, 5, // Right
+    ];
+
+    (points, indexes)
+}
+
+pub fn tetrahedron(len: f32) -> ([Point3<f32>; 4], [u16; 12]) {
+    // Use the hypotenuse to figure out the tip and compute the center point.
+    // All calculations are using the X coordinate. The bottom of the triangle.
+
+    // Setup out starting values
+    let plot_x = len / 2f32;  // We want the triangle centered on the Y coord.
+    let ra_x = plot_x;        // Right angle triangle X. Same length as the `plot_x`.
+    let ra_hypotenuse = len;  // Right angle triangle hypotenuse.
+
+    // Carry out reverse hypotenuse to get the triangle height.
+    let ra_x2 = ra_x.exp2();
+    let ra_hypotenuse2 = ra_hypotenuse.exp2();
+    let ra_height2 = ra_hypotenuse2 - ra_x2;
+    let ra_height = ra_height2.sqrt();
+
+    // Get out Y coordinates
+    let center = ra_height / 3f32;                // The center point is 1/3 of the height
+    let outer_radius = (ra_height * 2f32) / 3f32; // The outer radius is 2/3 of the height
+
+    // Our equilateral triangle
+    let points = [
+        Point3::new(plot_x.neg(), center.neg(), center.neg()), // Left
+        Point3::new(plot_x, center.neg(), center.neg()),       // Right
+        Point3::new(0f32, outer_radius, center.neg()),         // Top
+        Point3::new(0f32, 0f32, outer_radius),                 // Depth (point)
+    ];
+
+    let indexes = [
+        0, 1, 2, // Front,
+        0, 1, 3, // Bottom,
+        0, 3, 2, // Left,
+        1, 2, 3, // Right,
+    ];
+
+    (points, indexes)
 }
 
 /*

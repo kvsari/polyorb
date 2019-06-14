@@ -150,7 +150,7 @@ impl Bindings {
 
 impl Default for Bindings {
     fn default() -> Self {
-        let mut bindings = Bindings::new(0.01f32, 0.5f32);        
+        let mut bindings = Bindings::new(0.1f32, 0.5f32);
         bindings.bind(VirtualKeyCode::W, Action::CameraMoveNY);
         bindings.bind(VirtualKeyCode::S, Action::CameraMovePY);
         bindings.bind(VirtualKeyCode::A, Action::CameraMovePX);

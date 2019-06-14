@@ -126,7 +126,7 @@ pub fn run<S: Show>(title: &str) -> Result<(), Box<dyn std::error::Error>> {
 
     let perspective = Perspective::new(Deg(45f32), w_width / w_height, 1f32, 10f32);
     let view = View::new(
-        Point3::new(0f32, -1f32, -1f32), Point3::new(0f32, 0f32, 0f32), -Vector3::unit_z()
+        Point3::new(0f32, -4f32, 4f32), Point3::new(0f32, 0f32, 0f32), -Vector3::unit_z()
     );
     let camera = Camera::new(perspective, view);
     let bindings = input::Bindings::default();
