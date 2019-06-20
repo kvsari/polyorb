@@ -1,7 +1,26 @@
 //! Various 2d shapes used as building blocks for solids.
 use std::ops::Neg;
+use std::mem;
 
+use derive_getters::Getters;
 use cgmath::{Point2, Point3};
+
+#[derive(Debug, Copy, Clone, Getters)]
+pub struct Vertex {
+    position: [f32; 3],
+    normal: [f32; 3],
+    colour: [f32; 3],
+}
+
+impl Vertex {
+    fn new(position: [f32; 3], normal: [f32; 3], colour: [f32; 3]) -> Self {
+        Vertex { position, normal, colour }
+    }
+
+    pub const fn sizeof() -> usize {
+        mem::size_of::<Vertex>()
+    }
+}
 
 /// Create an equilateral triangle centered on (0, 0). It's up to consumers to
 /// translate/scale/rotate the triangle for their needs.
@@ -30,7 +49,7 @@ pub fn equilateral_triangle(len: f32) -> ([Point2<f32>; 3], [u16; 3]) {
     let points = [
         Point2::new(plot_x.neg(), center.neg()), // Left
         Point2::new(plot_x, center.neg()),       // Right
-        Point2::new(0f32, outer_radius),       // Top
+        Point2::new(0f32, outer_radius),         // Top
     ];
 
     (points, [0, 1, 2])
@@ -48,43 +67,43 @@ pub fn square(len: f32) -> ([Point2<f32>; 4], [u16; 6]) {
     (points, [0, 1, 2, 2, 3, 0])
 }
 
-pub fn cube_01() -> ([Point3<f32>; 24], [u16; 36]) {
+pub fn cube_01(colour: [f32; 3]) -> ([Vertex; 24], [u16; 36]) {
     let points = [
         // top (0, 0, 1)
-        Point3::new(-1f32, -1f32, 1f32),
-        Point3::new(1f32, -1f32, 1f32),
-        Point3::new(1f32, 1f32, 1f32),
-        Point3::new(-1f32, 1f32, 1f32),
+        Vertex::new([-1f32, -1f32, 1f32], [0f32, 0f32, 1f32], colour),
+        Vertex::new([1f32, -1f32, 1f32], [0f32, 0f32, 1f32], colour),
+        Vertex::new([1f32, 1f32, 1f32], [0f32, 0f32, 1f32], colour),
+        Vertex::new([-1f32, 1f32, 1f32], [0f32, 0f32, 1f32], colour),
         
         // bottom (0, 0, -1)
-        Point3::new(-1f32, 1f32, -1f32),
-        Point3::new(1f32, 1f32, -1f32),
-        Point3::new(1f32, -1f32, -1f32),
-        Point3::new(-1f32, -1f32, -1f32),
+        Vertex::new([-1f32, 1f32, -1f32], [0f32, 0f32, -1f32], colour),
+        Vertex::new([1f32, 1f32, -1f32], [0f32, 0f32, -1f32], colour),
+        Vertex::new([1f32, -1f32, -1f32], [0f32, 0f32, -1f32], colour),
+        Vertex::new([-1f32, -1f32, -1f32], [0f32, 0f32, -1f32], colour),
         
         // right (1, 0, 0)
-        Point3::new(1f32, -1f32, -1f32),
-        Point3::new(1f32, 1f32, -1f32),
-        Point3::new(1f32, 1f32, 1f32),
-        Point3::new(1f32, -1f32, 1f32),
+        Vertex::new([1f32, -1f32, -1f32], [1f32, 0f32, 0f32], colour),
+        Vertex::new([1f32, 1f32, -1f32], [1f32, 0f32, 0f32], colour),
+        Vertex::new([1f32, 1f32, 1f32], [1f32, 0f32, 0f32], colour),
+        Vertex::new([1f32, -1f32, 1f32], [1f32, 0f32, 0f32], colour),
         
         // left (-1, 0, 0)
-        Point3::new(-1f32, -1f32, 1f32),
-        Point3::new(-1f32, 1f32, 1f32),
-        Point3::new(-1f32, 1f32, -1f32),
-        Point3::new(-1f32, -1f32, -1f32),
+        Vertex::new([-1f32, -1f32, 1f32], [-1f32, 0f32, 0f32], colour),
+        Vertex::new([-1f32, 1f32, 1f32], [-1f32, 0f32, 0f32], colour),
+        Vertex::new([-1f32, 1f32, -1f32], [-1f32, 0f32, 0f32], colour),
+        Vertex::new([-1f32, -1f32, -1f32], [-1f32, 0f32, 0f32], colour),
         
         // front (0, 1, 0)
-        Point3::new(1f32, 1f32, -1f32),
-        Point3::new(-1f32, 1f32, -1f32),
-        Point3::new(-1f32, 1f32, 1f32),
-        Point3::new(1f32, 1f32, 1f32),
+        Vertex::new([1f32, 1f32, -1f32], [0f32, 1f32, 0f32], colour),
+        Vertex::new([-1f32, 1f32, -1f32], [0f32, 1f32, 0f32], colour),
+        Vertex::new([-1f32, 1f32, 1f32], [0f32, 1f32, 0f32], colour),
+        Vertex::new([1f32, 1f32, 1f32], [0f32, 1f32, 0f32], colour),
         
         // back (0, -1, 0)
-        Point3::new(1f32, -1f32, 1f32),
-        Point3::new(-1f32, -1f32, 1f32),
-        Point3::new(-1f32, -1f32, -1f32),
-        Point3::new(1f32, -1f32, -1f32),
+        Vertex::new([1f32, -1f32, 1f32], [0f32, -1f32, 0f32], colour),
+        Vertex::new([-1f32, -1f32, 1f32], [0f32, -1f32, 0f32], colour),
+        Vertex::new([-1f32, -1f32, -1f32], [0f32, -1f32, 0f32], colour),
+        Vertex::new([1f32, -1f32, -1f32], [0f32, -1f32, 0f32], colour),
     ];
 
     let indexes = [
@@ -126,6 +145,7 @@ pub fn cube_02() -> ([Point3<f32>; 8], [u16; 36]) {
     (points, indexes)
 }
 
+/*
 pub fn tetrahedron(len: f32) -> ([Point3<f32>; 4], [u16; 12]) {
     // Use the hypotenuse to figure out the tip and compute the center point.
     // All calculations are using the X coordinate. The bottom of the triangle.
@@ -162,6 +182,9 @@ pub fn tetrahedron(len: f32) -> ([Point3<f32>; 4], [u16; 12]) {
 
     (points, indexes)
 }
+ */
+
+
 
 /*
 #[cfg(test)]
