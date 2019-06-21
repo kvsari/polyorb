@@ -78,10 +78,11 @@ pub struct Scene {
     lights: Vec<Light>,
     bind_group: wgpu::BindGroup,
     pipeline: wgpu::RenderPipeline,
+    light_buf: wgpu::Buffer,
     projection_buf: wgpu::Buffer,
     rotation_buf: wgpu::Buffer,
     vertex_buf: wgpu::Buffer,
-    index_buf: wgpu::Buffer,    
+    index_buf: wgpu::Buffer,
     index_len: usize,
     camera: Camera<f32>,
     y_rotation: Rad<f32>,
@@ -92,6 +93,7 @@ impl Scene {
         lights: Vec<Light>,
         bind_group: wgpu::BindGroup,
         pipeline: wgpu::RenderPipeline,
+        light_buf: wgpu::Buffer,
         projection_buf: wgpu::Buffer,
         rotation_buf: wgpu::Buffer,
         vertex_buf: wgpu::Buffer,
@@ -104,6 +106,7 @@ impl Scene {
             lights,
             bind_group,
             pipeline,
+            light_buf,
             projection_buf,
             rotation_buf,
             vertex_buf,
@@ -187,13 +190,14 @@ impl Show for Scene {
                 //target_view: shadow_target_views[1].take().unwrap(),
             },
         ];
-        let light_uniform_size = (2 * mem::size_of::<LightRaw>()) as u32;
-        let light_uniform_buf = device.create_buffer(&wgpu::BufferDescriptor {
-            size: light_uniform_size,
-            usage: wgpu::BufferUsageFlags::UNIFORM
-                | wgpu::BufferUsageFlags::TRANSFER_SRC
-                | wgpu::BufferUsageFlags::TRANSFER_DST,
-        });
+        let light_buf_size = (2 * mem::size_of::<LightRaw>()) as u32;
+        let mut light_buf_builder = device.create_buffer_mapped(
+            2,
+            wgpu::BufferUsageFlags::UNIFORM | wgpu::BufferUsageFlags::TRANSFER_DST,
+        );
+        light_buf_builder.data[0] = lights[0].to_raw();
+        light_buf_builder.data[1] = lights[1].to_raw();
+        let light_buf = light_buf_builder.finish();
 
         let bg_layout = device.create_bind_group_layout(
             &wgpu::BindGroupLayoutDescriptor { bindings: &[
@@ -249,8 +253,8 @@ impl Show for Scene {
                 wgpu::Binding {
                     binding: 2,
                     resource: wgpu::BindingResource::Buffer {
-                        buffer: &light_uniform_buf,
-                        range: 0..light_uniform_size,
+                        buffer: &light_buf,
+                        range: 0..light_buf_size,
                     }
                 },
             ],
@@ -267,10 +271,10 @@ impl Show for Scene {
                 entry_point: "main",
             },
             rasterization_state: wgpu::RasterizationStateDescriptor {
-                front_face: wgpu::FrontFace::Ccw,
-                cull_mode: wgpu::CullMode::None,
-                depth_bias: 0,
-                depth_bias_slope_scale: 0.0,
+                front_face: wgpu::FrontFace::Cw,
+                cull_mode: wgpu::CullMode::Back,
+                depth_bias: 2,
+                depth_bias_slope_scale: 2.0,
                 depth_bias_clamp: 0.0,
             },
             primitive_topology: wgpu::PrimitiveTopology::TriangleList,
@@ -317,6 +321,7 @@ impl Show for Scene {
             lights,
             bind_group,
             pipeline,
+            light_buf,
             projection_buf,
             rotation_buf,
             vertex_buf,
