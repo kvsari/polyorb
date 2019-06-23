@@ -124,7 +124,8 @@ pub fn run<S: Show>(title: &str) -> Result<(), Box<dyn std::error::Error>> {
     let w_width = w_size.width.round() as f32;
     let w_height = w_size.height.round() as f32;
 
-    let perspective = Perspective::new(Deg(45f32), w_width / w_height, 1f32, 10f32);
+    //                                                                       [View Dist].
+    let perspective = Perspective::new(Deg(45f32), w_width / w_height, 1f32, 100f32);
     let view = View::new(
         Point3::new(0f32, -4f32, 4f32), Point3::new(0f32, 0f32, 0f32), -Vector3::unit_z()
     );

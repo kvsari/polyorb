@@ -45,35 +45,6 @@ impl Light {
     }
 }
 
-/*
-fn gen_shape_01(side_len: f32, colour: [f32; 3]) -> (Vec<Vertex>, Vec<u16>) {
-    let (points, index) = shape::equilateral_triangle(side_len);
-    let vertexes = points
-        .into_iter()
-        .map(|p| Vertex::new([p.x, p.y, 0_f32], colour))
-        .collect();
-    
-    (vertexes, index.to_vec())
-}
-
-fn gen_shape_02(side_len: f32, colour: [f32; 3]) -> (Vec<Vertex>, Vec<u16>) {
-    let (points, index) = shape::square(side_len);
-    let vertexes = points
-        .into_iter()
-        .map(|p| Vertex::new([p.x, p.y, 0_f32], colour))
-        .collect();
-
-    (vertexes, index.to_vec())
-}
-
-fn convert_to_vertexes(points: &[Point3<f32>], colour: [f32; 3]) -> Vec<Vertex> {
-    points
-        .into_iter()
-        .map(|p| Vertex::new([p.x, p.y, p.z], colour))
-        .collect()
-}
-*/
-
 pub struct Scene {
     lights: Vec<Light>,
     bind_group: wgpu::BindGroup,
@@ -150,11 +121,8 @@ impl Show for Scene {
             )
             .fill_from_slice(r_ref);
                 
-        //let (vertexes, indexes) = gen_shape_01(1f32, [1.0, 0.0, 0.0]);
-        //let (points, indexes) = shape::cube_02();
-        //let (points, indexes) = shape::tetrahedron(1f32);
-        //let vertexes = convert_to_vertexes(&points, [0.0, 1.0, 0.0]);
-        let (vertexes, indexes) = shape::cube_01([0.0, 1.0, 0.0]);
+        //let (vertexes, indexes) = shape::cube_01([0.0, 1.0, 0.0]);
+        let (vertexes, indexes) = shape::tetrahedron(1f32, [0.0, 1.0, 0.0]);
         
         let vertex_buf = device
             .create_buffer_mapped(vertexes.len(), wgpu::BufferUsageFlags::VERTEX)

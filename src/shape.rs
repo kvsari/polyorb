@@ -3,13 +3,13 @@ use std::ops::Neg;
 use std::mem;
 
 use derive_getters::Getters;
-use cgmath::{Point2, Point3};
+use cgmath::{Point2, Point3, Vector3};
 
 #[derive(Debug, Copy, Clone, Getters)]
 pub struct Vertex {
     position: [f32; 3],
     normal: [f32; 3],
-    colour: [f32; 3],
+    colour: [f32; 3], // Consider removing this in the upcoming refactor
 }
 
 impl Vertex {
@@ -118,33 +118,6 @@ pub fn cube_01(colour: [f32; 3]) -> ([Vertex; 24], [u16; 36]) {
     (points, indexes)
 }
 
-pub fn cube_02() -> ([Point3<f32>; 8], [u16; 36]) {
-    let points = [
-        // Front
-        Point3::new(-1f32, -1f32, 1f32), // 1 (0)
-        Point3::new(1f32, -1f32, 1f32),  // 2 (1)
-        Point3::new(1f32, 1f32, 1f32),   // 3 (2)
-        Point3::new(-1f32, 1f32, 1f32),  // 4 (3)
-        
-        // Back
-        Point3::new(-1f32, -1f32, -1f32),// 5 (4) 
-        Point3::new(1f32, -1f32, -1f32), // 6 (5)
-        Point3::new(1f32, 1f32, -1f32),  // 7 (6)
-        Point3::new(-1f32, 1f32, -1f32), // 8 (7)
-    ];
-
-    let indexes = [
-        0, 1, 2, 2, 3, 0, // Front
-        4, 5, 6, 6, 7, 4, // Back
-        4, 3, 7, 7, 8, 4, // Top
-        0, 1, 5, 5, 4, 0, // Bottom
-        4, 0, 3, 3, 7, 4, // Left
-        5, 1, 2, 2, 6, 5, // Right
-    ];
-
-    (points, indexes)
-}
-
 /*
 pub fn tetrahedron(len: f32) -> ([Point3<f32>; 4], [u16; 12]) {
     // Use the hypotenuse to figure out the tip and compute the center point.
@@ -184,13 +157,100 @@ pub fn tetrahedron(len: f32) -> ([Point3<f32>; 4], [u16; 12]) {
 }
  */
 
+fn triangle_normal(points: [&[f32; 3]; 3]) -> [f32; 3] {
+    let p1 = Vector3::new(points[0][0], points[0][1], points[0][2]);
+    let p2 = Vector3::new(points[1][0], points[1][1], points[1][2]);
+    let p3 = Vector3::new(points[2][0], points[2][1], points[2][2]);
 
+    let v = p2 - p1;
+    let w = p3 - p1;
 
-/*
+    let n = v.cross(w);
+
+    [n.x, n.y, n.z] // normal gets normalized in the shader.
+}
+
+pub fn tetrahedron(len: f32, colour: [f32; 3]) -> ([Vertex; 12], [u16; 12]) {
+    // Use the hypotenuse to figure out the tip and compute the center point.
+    // All calculations are using the X coordinate. The bottom of the triangle.
+
+    // Setup out starting values
+    let plot_x = len / 2f32;  // We want the triangle centered on the Y coord.
+    let ra_x = plot_x;        // Right angle triangle X. Same length as the `plot_x`.
+    let ra_hypotenuse = len;  // Right angle triangle hypotenuse.
+
+    // Carry out reverse hypotenuse to get the triangle height.
+    let ra_x2 = ra_x.exp2();
+    let ra_hypotenuse2 = ra_hypotenuse.exp2();
+    let ra_height2 = ra_hypotenuse2 - ra_x2;
+    let ra_height = ra_height2.sqrt();
+
+    // Get out Y coordinates
+    let center = ra_height / 3f32;                // The center point is 1/3 of the height
+    let outer_radius = (ra_height * 2f32) / 3f32; // The outer radius is 2/3 of the height
+
+    // Our equilateral triangle
+    let left_point: [f32; 3] = [plot_x.neg(), center.neg(), center.neg()];
+    let right_point: [f32; 3] = [plot_x, center.neg(), center.neg()];
+    let top_point: [f32; 3] = [0f32, outer_radius, center.neg()];
+    let depth_point: [f32; 3] = [0f32, 0f32, outer_radius];
+
+    // From these four points we get our four triangles and normals.
+    let n1 = triangle_normal([&left_point, &right_point, &top_point]);
+    let n2 = triangle_normal([&left_point, &depth_point, &top_point]);
+    let n3 = triangle_normal([&left_point, &right_point, &depth_point]);
+    let n4 = triangle_normal([&depth_point, &right_point, &top_point]);
+
+    let vertexes = [
+        // T1
+        Vertex::new(left_point, n1, colour),
+        Vertex::new(right_point, n1, colour),
+        Vertex::new(top_point, n1, colour),
+
+        // T2
+        Vertex::new(left_point, n2, colour),
+        Vertex::new(depth_point, n2, colour),
+        Vertex::new(top_point, n2, colour),
+
+        // T3
+        Vertex::new(left_point, n3, colour),
+        Vertex::new(right_point, n3, colour),
+        Vertex::new(depth_point, n3, colour),
+
+        // T4
+        Vertex::new(depth_point, n3, colour),
+        Vertex::new(right_point, n3, colour),
+        Vertex::new(top_point, n3, colour),
+    ];
+
+    let indexes = [
+        0, 1, 2, 
+        3, 4, 5,
+        6, 7, 8,
+        9, 10, 11,
+    ];
+
+    (vertexes, indexes)
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
 
+    #[test]
+    fn normal_makes_sense() {
+        let p1 = [0f32, 0f32, 0f32];
+        let p2 = [1f32, 0f32, 0f32];
+        let p3 = [0f32, 1f32, 0f32];
+
+        let n = triangle_normal([&p1, &p2, &p3]);
+
+        println!("{:?}", &n);
+
+        assert!(n == [0f32, 0f32, 1f32]);
+    }
+
+    /*
     #[test]
     fn gen_equilateral_triangle() {
         let points = equilateral_triangle(1_f32);
@@ -211,5 +271,5 @@ mod test {
         println!("{:?}", &tp3);
         assert!(points[2] == tp3);
     }
+    */
 }
-*/
