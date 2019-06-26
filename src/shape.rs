@@ -118,45 +118,6 @@ pub fn cube_01(colour: [f32; 3]) -> ([Vertex; 24], [u16; 36]) {
     (points, indexes)
 }
 
-/*
-pub fn tetrahedron(len: f32) -> ([Point3<f32>; 4], [u16; 12]) {
-    // Use the hypotenuse to figure out the tip and compute the center point.
-    // All calculations are using the X coordinate. The bottom of the triangle.
-
-    // Setup out starting values
-    let plot_x = len / 2f32;  // We want the triangle centered on the Y coord.
-    let ra_x = plot_x;        // Right angle triangle X. Same length as the `plot_x`.
-    let ra_hypotenuse = len;  // Right angle triangle hypotenuse.
-
-    // Carry out reverse hypotenuse to get the triangle height.
-    let ra_x2 = ra_x.exp2();
-    let ra_hypotenuse2 = ra_hypotenuse.exp2();
-    let ra_height2 = ra_hypotenuse2 - ra_x2;
-    let ra_height = ra_height2.sqrt();
-
-    // Get out Y coordinates
-    let center = ra_height / 3f32;                // The center point is 1/3 of the height
-    let outer_radius = (ra_height * 2f32) / 3f32; // The outer radius is 2/3 of the height
-
-    // Our equilateral triangle
-    let points = [
-        Point3::new(plot_x.neg(), center.neg(), center.neg()), // Left
-        Point3::new(plot_x, center.neg(), center.neg()),       // Right
-        Point3::new(0f32, outer_radius, center.neg()),         // Top
-        Point3::new(0f32, 0f32, outer_radius),                 // Depth (point)
-    ];
-
-    let indexes = [
-        0, 1, 2, // Front,
-        0, 1, 3, // Bottom,
-        0, 3, 2, // Left,
-        1, 2, 3, // Right,
-    ];
-
-    (points, indexes)
-}
- */
-
 fn triangle_normal(points: [&[f32; 3]; 3]) -> [f32; 3] {
     let p1 = Vector3::new(points[0][0], points[0][1], points[0][2]);
     let p2 = Vector3::new(points[1][0], points[1][1], points[1][2]);
@@ -168,6 +129,21 @@ fn triangle_normal(points: [&[f32; 3]; 3]) -> [f32; 3] {
     let n = v.cross(w);
 
     [n.x, n.y, n.z] // normal gets normalized in the shader.
+}
+
+fn average_normals(normals: &[[f32; 3]]) -> [f32; 3] {
+    let mut summed: [f32; 3] = [0f32, 0f32, 0f32];
+    let mut count = 0;
+    for [x, y, z] in normals {
+        summed[0] += x;
+        summed[1] += y;
+        summed[2] += z;
+        count += 1;
+    }
+
+    let divisor: f32 = count as f32;
+
+    [summed[0] / divisor, summed[1] / divisor, summed[2] / divisor]
 }
 
 pub fn tetrahedron(len: f32, colour: [f32; 3]) -> ([Vertex; 12], [u16; 12]) {
@@ -185,7 +161,7 @@ pub fn tetrahedron(len: f32, colour: [f32; 3]) -> ([Vertex; 12], [u16; 12]) {
     let ra_height2 = ra_hypotenuse2 - ra_x2;
     let ra_height = ra_height2.sqrt();
 
-    // Get out Y coordinates
+    // Get our Y coordinates
     let center = ra_height / 3f32;                // The center point is 1/3 of the height
     let outer_radius = (ra_height * 2f32) / 3f32; // The outer radius is 2/3 of the height
 
@@ -196,35 +172,67 @@ pub fn tetrahedron(len: f32, colour: [f32; 3]) -> ([Vertex; 12], [u16; 12]) {
     let depth_point: [f32; 3] = [0f32, 0f32, outer_radius];
 
     // From these four points we get our four triangles and normals.
-    let n1 = triangle_normal([&left_point, &right_point, &top_point]);
+    let n1 = triangle_normal([&right_point, &left_point, &top_point]);
     let n2 = triangle_normal([&left_point, &depth_point, &top_point]);
     let n3 = triangle_normal([&left_point, &right_point, &depth_point]);
     let n4 = triangle_normal([&depth_point, &right_point, &top_point]);
 
+    let left_point_normal = average_normals(&[n1, n2, n3]);
+    let right_point_normal = average_normals(&[n1, n3, n4]);
+    let top_point_normal = average_normals(&[n1, n2, n4]);
+    let depth_point_normal = average_normals(&[n2, n3, n4]);
+
+    // debug colour
+    let dcolour: [f32; 3] = [0f32, 0f32, 1f32];
+
+    /*
     let vertexes = [
         // T1
-        Vertex::new(left_point, n1, colour),
-        Vertex::new(right_point, n1, colour),
-        Vertex::new(top_point, n1, colour),
+        Vertex::new(right_point, right_point_normal, colour),
+        Vertex::new(left_point, left_point_normal, colour),
+        Vertex::new(top_point, top_point_normal, colour),
+        
+        // T2
+        Vertex::new(left_point, left_point_normal, colour),
+        Vertex::new(depth_point, depth_point_normal, colour),
+        Vertex::new(top_point, top_point_normal, colour),
+        
+        // T3
+        Vertex::new(left_point, left_point_normal, colour),
+        Vertex::new(right_point, right_point_normal, colour),
+        Vertex::new(depth_point, depth_point_normal, colour),
 
+        // T4
+        Vertex::new(depth_point, depth_point_normal, colour),
+        Vertex::new(right_point, right_point_normal, colour),
+        Vertex::new(top_point, top_point_normal, colour),
+    ];
+     */
+
+    let vertexes = [
+        // T1
+        Vertex::new(right_point, n1, colour),
+        Vertex::new(left_point, n1, colour),
+        Vertex::new(top_point, n1, colour),
+        
         // T2
         Vertex::new(left_point, n2, colour),
         Vertex::new(depth_point, n2, colour),
         Vertex::new(top_point, n2, colour),
-
+        
         // T3
         Vertex::new(left_point, n3, colour),
         Vertex::new(right_point, n3, colour),
         Vertex::new(depth_point, n3, colour),
 
         // T4
-        Vertex::new(depth_point, n3, colour),
-        Vertex::new(right_point, n3, colour),
-        Vertex::new(top_point, n3, colour),
+        Vertex::new(depth_point, n4, colour),
+        Vertex::new(right_point, n4, colour),
+        Vertex::new(top_point, n4, colour),
     ];
 
     let indexes = [
-        0, 1, 2, 
+        0, 1, 2,
         3, 4, 5,
         6, 7, 8,
         9, 10, 11,
