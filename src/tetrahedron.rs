@@ -123,7 +123,8 @@ impl Show for Scene {
                 
         //let (vertexes, indexes) = shape::cube_01([0.0, 1.0, 0.0]);
         //let (vertexes, indexes) = shape::tetrahedron(1f32, [0.0, 1.0, 0.0]);
-        let (vertexes, indexes) = shape::octahedron(1f32, [0.0, 1.0, 0.0]);
+        //let (vertexes, indexes) = shape::octahedron(1f32, [0.0, 1.0, 0.0]);
+        let (vertexes, indexes) = shape::icosahedron(1f32, [0.0, 1.0, 0.0]);
         
         let vertex_buf = device
             .create_buffer_mapped(vertexes.len(), wgpu::BufferUsageFlags::VERTEX)

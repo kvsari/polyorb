@@ -325,6 +325,112 @@ pub fn octahedron(len: f32, colour: [f32; 3]) -> ([Vertex; 24], [u16; 24]) {
     (vertexes, indexes)
 }
 
+/// Use the three orthogonal golden rectangle technique to generate the icosahedron.
+pub fn icosahedron(len: f32, colour: [f32; 3]) -> (Vec<Vertex>, Vec<u16>) {
+    // Build the long side of the golden rectangle.
+    let h_len = len / 2f32;
+    let g_len = h_len + (h_len * 5f32.sqrt());
+
+    // Now construct three orthogonal golden rectangles centered on (0, 0, 0).
+    let g_mid = g_len / 2f32;
+
+    // Rect 1 along X Y.
+    let r_xy_tl = [g_mid.neg(), h_len, 0f32];
+    let r_xy_tr = [g_mid, h_len, 0f32];
+    let r_xy_br = [g_mid, h_len.neg(), 0f32];
+    let r_xy_bl = [g_mid.neg(), h_len.neg(), 0f32];
+
+    // Rect 2 along X Z
+    let r_xz_tl = [h_len, 0f32, g_mid.neg()];
+    let r_xz_tr = [h_len, 0f32, g_mid];
+    let r_xz_br = [h_len.neg(), 0f32, g_mid];
+    let r_xz_bl = [h_len.neg(), 0f32, g_mid.neg()];
+
+    // Rect 3 along Y Z
+    let r_yz_tl = [0f32, g_mid.neg(), h_len];
+    let r_yz_tr = [0f32, g_mid, h_len];
+    let r_yz_br = [0f32, g_mid, h_len.neg()];
+    let r_yz_bl = [0f32, g_mid.neg(), h_len.neg()];
+
+    let n01 = triangle_normal([&r_yz_br, &r_xy_tl, &r_yz_tr]);
+    let n02 = triangle_normal([&r_xy_tl, &r_xz_bl, &r_xy_bl]);
+    let n03 = triangle_normal([&r_xy_tl, &r_yz_br, &r_xz_bl]);
+    let n04 = triangle_normal([&r_xz_br, &r_xy_tl, &r_xy_bl]);
+    let n05 = triangle_normal([&r_yz_tr, &r_xy_tl, &r_xz_br]);
+    let n06 = triangle_normal([&r_xy_bl, &r_xz_bl, &r_yz_bl]);
+    let n07 = triangle_normal([&r_xy_bl, &r_yz_bl, &r_yz_tl]);
+    let n08 = triangle_normal([&r_xy_bl, &r_yz_tl, &r_xz_br]);
+    let n09 = triangle_normal([&r_yz_tr, &r_xz_br, &r_xz_tr]);
+    let n10 = triangle_normal([&r_xy_tr, &r_yz_tr, &r_xz_tr]);
+
+    let vertexes = vec![
+        // T1
+        Vertex::new(r_yz_br, n01, colour),
+        Vertex::new(r_xy_tl, n01, colour),
+        Vertex::new(r_yz_tr, n01, colour),
+
+        // T2
+        Vertex::new(r_xy_tl, n02, colour),
+        Vertex::new(r_xz_bl, n02, colour),
+        Vertex::new(r_xy_bl, n02, colour),
+
+        // T3
+        Vertex::new(r_xy_tl, n03, colour),
+        Vertex::new(r_yz_br, n03, colour),
+        Vertex::new(r_xz_bl, n03, colour),
+
+        // T4
+        Vertex::new(r_xz_br, n04, colour),
+        Vertex::new(r_xy_tl, n04, colour),
+        Vertex::new(r_xy_bl, n04, colour),
+
+        // T5
+        Vertex::new(r_yz_tr, n05, colour),
+        Vertex::new(r_xy_tl, n05, colour),
+        Vertex::new(r_xz_br, n05, colour),
+
+        // T6
+        Vertex::new(r_xy_bl, n06, colour),
+        Vertex::new(r_xz_bl, n06, colour),
+        Vertex::new(r_yz_bl, n06, colour),
+
+        // T7
+        Vertex::new(r_xy_bl, n07, colour),
+        Vertex::new(r_yz_bl, n07, colour),
+        Vertex::new(r_yz_tl, n07, colour),
+
+        // T8
+        Vertex::new(r_xy_bl, n08, colour),
+        Vertex::new(r_yz_tl, n08, colour),
+        Vertex::new(r_xz_br, n08, colour),
+
+        // T9
+        Vertex::new(r_yz_tr, n09, colour),
+        Vertex::new(r_xz_br, n09, colour),
+        Vertex::new(r_xz_tr, n09, colour),
+
+        // T10
+        Vertex::new(r_xy_tr, n10, colour),
+        Vertex::new(r_yz_tr, n10, colour),
+        Vertex::new(r_xz_tr, n10, colour),
+    ];
+
+    let indexes = vec![
+        0, 1, 2,
+        3, 4, 5,
+        6, 7, 8,
+        9, 10, 11,
+        12, 13, 14,
+        15, 16, 17,
+        18, 19, 20,
+        21, 22, 23,
+        24, 25, 26,
+        27, 28, 29,
+    ];
+
+    (vertexes, indexes)
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
