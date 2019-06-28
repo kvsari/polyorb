@@ -3,7 +3,7 @@
 use std::{ops, mem};
 
 use shaderc::ShaderKind;
-use cgmath::{Matrix4, Vector3, Point3, Rad};
+use cgmath::{Matrix4, Vector3, Point3, Rad, Euler};
 
 use crate::show::{Show, Camera, View, load_shader, common::*};
 use crate::shape::{self, Vertex};
@@ -56,6 +56,7 @@ pub struct Scene {
     index_buf: wgpu::Buffer,
     index_len: usize,
     camera: Camera<f32>,
+    x_rotation: Rad<f32>,
     y_rotation: Rad<f32>,
 }
 
@@ -71,6 +72,7 @@ impl Scene {
         index_buf: wgpu::Buffer,
         index_len: usize,
         camera: Camera<f32>,
+        x_rotation: Rad<f32>,
         y_rotation: Rad<f32>,
     ) -> Self {
         Scene {
@@ -84,6 +86,7 @@ impl Scene {
             index_buf,
             index_len,
             camera,
+            x_rotation,
             y_rotation,
         }
     }
@@ -299,16 +302,18 @@ impl Show for Scene {
             indexes.len(),
             camera,
             Rad(0f32),
+            Rad(0f32),
         )
     }
 
     fn resize(&mut self, desc: &wgpu::SwapChainDescriptor, device: &mut wgpu::Device) { }
     
     fn update(
-        &mut self, camera_movement: Vector3<f32>, y_rot_inc: Rad<f32>
-    ) -> (&View<f32>, &Rad<f32>) {
+        &mut self, camera_movement: Vector3<f32>, x_rot_inc: Rad<f32>, y_rot_inc: Rad<f32>,
+    ) -> (&View<f32>, &Rad<f32>, &Rad<f32>) {
+        self.x_rotation += x_rot_inc;
         self.y_rotation += y_rot_inc;
-        (self.camera.move_camera(camera_movement), &self.y_rotation)
+        (self.camera.move_camera(camera_movement), &self.x_rotation, &self.y_rotation)
     }
     
     fn render(&mut self, frame: &wgpu::SwapChainOutput, device: &mut wgpu::Device) {
@@ -332,7 +337,9 @@ impl Show for Scene {
 
         // Ditto with the rotation
         {
-            let rotation = Matrix4::from_angle_y(self.y_rotation);
+            let rotation = Matrix4::from(Euler::new(
+                self.x_rotation, self.y_rotation, Rad(0f32)
+            ));
             let r_ref: &[f32; 16] = rotation.as_ref();
             let new_rotation_buf = device
                 .create_buffer_mapped(

@@ -327,6 +327,9 @@ pub fn octahedron(len: f32, colour: [f32; 3]) -> ([Vertex; 24], [u16; 24]) {
 
 /// Use the three orthogonal golden rectangle technique to generate the icosahedron.
 pub fn icosahedron(len: f32, colour: [f32; 3]) -> (Vec<Vertex>, Vec<u16>) {
+    // debug colour
+    let dcolour: [f32; 3] = [1f32, 0f32, 0f32];
+    
     // Build the long side of the golden rectangle.
     let h_len = len / 2f32;
     let g_len = h_len + (h_len * 5f32.sqrt());
@@ -362,6 +365,16 @@ pub fn icosahedron(len: f32, colour: [f32; 3]) -> (Vec<Vertex>, Vec<u16>) {
     let n08 = triangle_normal([&r_xy_bl, &r_yz_tl, &r_xz_br]);
     let n09 = triangle_normal([&r_yz_tr, &r_xz_br, &r_xz_tr]);
     let n10 = triangle_normal([&r_xy_tr, &r_yz_tr, &r_xz_tr]);
+    let n11 = triangle_normal([&r_yz_tr, &r_xy_tr, &r_yz_br]);
+    let n12 = triangle_normal([&r_xz_tr, &r_yz_tl, &r_xy_br]);
+    let n13 = triangle_normal([&r_xy_br, &r_yz_tl, &r_yz_bl]);
+    let n14 = triangle_normal([&r_xy_br, &r_yz_bl, &r_xz_tl]);
+    let n15 = triangle_normal([&r_xy_tr, &r_xz_tr, &r_xy_br]);
+    let n16 = triangle_normal([&r_xz_tl, &r_xy_tr, &r_xy_br]);
+    let n17 = triangle_normal([&r_xz_tl, &r_yz_bl, &r_xz_bl]);
+    let n18 = triangle_normal([&r_xz_bl, &r_yz_br, &r_xz_tl]);
+    let n19 = triangle_normal([&r_yz_br, &r_xy_tr, &r_xz_tl]);
+    let n20 = triangle_normal([&r_xz_br, &r_yz_tl, &r_xz_tr]);
 
     let vertexes = vec![
         // T1
@@ -413,6 +426,56 @@ pub fn icosahedron(len: f32, colour: [f32; 3]) -> (Vec<Vertex>, Vec<u16>) {
         Vertex::new(r_xy_tr, n10, colour),
         Vertex::new(r_yz_tr, n10, colour),
         Vertex::new(r_xz_tr, n10, colour),
+
+        // T11
+        Vertex::new(r_yz_tr, n11, colour),
+        Vertex::new(r_xy_tr, n11, colour),
+        Vertex::new(r_yz_br, n11, colour),
+
+        // T12
+        Vertex::new(r_xz_tr, n12, colour),
+        Vertex::new(r_yz_tl, n12, colour),
+        Vertex::new(r_xy_br, n12, colour),
+
+        // T13
+        Vertex::new(r_xy_br, n13, colour),
+        Vertex::new(r_yz_tl, n13, colour),
+        Vertex::new(r_yz_bl, n13, colour),
+
+        // T14
+        Vertex::new(r_xy_br, n14, colour),
+        Vertex::new(r_yz_bl, n14, colour),
+        Vertex::new(r_xz_tl, n14, colour),
+
+        // T15
+        Vertex::new(r_xy_tr, n15, colour),
+        Vertex::new(r_xz_tr, n15, colour),
+        Vertex::new(r_xy_br, n15, colour),
+
+        // T16
+        Vertex::new(r_xz_tl, n16, colour),
+        Vertex::new(r_xy_tr, n16, colour),
+        Vertex::new(r_xy_br, n16, colour),
+
+        // T17
+        Vertex::new(r_xz_tl, n17, colour),
+        Vertex::new(r_yz_bl, n17, colour),
+        Vertex::new(r_xz_bl, n17, colour),
+
+        // T18
+        Vertex::new(r_xz_bl, n18, colour),
+        Vertex::new(r_yz_br, n18, colour),
+        Vertex::new(r_xz_tl, n18, colour),
+
+        // T19
+        Vertex::new(r_yz_br, n19, colour),
+        Vertex::new(r_xy_tr, n19, colour),
+        Vertex::new(r_xz_tl, n19, colour),
+
+        // T20
+        Vertex::new(r_xz_br, n20, colour),
+        Vertex::new(r_yz_tl, n20, colour),
+        Vertex::new(r_xz_tr, n20, colour),
     ];
 
     let indexes = vec![
@@ -426,6 +489,16 @@ pub fn icosahedron(len: f32, colour: [f32; 3]) -> (Vec<Vertex>, Vec<u16>) {
         21, 22, 23,
         24, 25, 26,
         27, 28, 29,
+        30, 31, 32,
+        33, 34, 35,
+        36, 37, 38,
+        39, 40, 41,
+        42, 43, 44,
+        45, 46, 47,
+        48, 49, 50,
+        51, 52, 53,
+        54, 55, 56,
+        57, 58, 59,
     ];
 
     (vertexes, indexes)

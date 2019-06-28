@@ -127,15 +127,19 @@ impl ActionState for u16 {
 pub struct Bindings {
     bindings: HashMap<VirtualKeyCode, Action>,
     camera_increment: f32,
-    rotation_increment: f32,
+    x_rotation_increment: f32,
+    y_rotation_increment: f32,
 }
 
 impl Bindings {
-    pub fn new(camera_increment: f32, rotation_increment: f32) -> Self {
+    pub fn new(
+        camera_increment: f32, x_rotation_increment: f32, y_rotation_increment: f32,
+    ) -> Self {
         Bindings {
             bindings: HashMap::new(),
             camera_increment,
-            rotation_increment,
+            x_rotation_increment,
+            y_rotation_increment,
         }
     }
 
@@ -150,13 +154,15 @@ impl Bindings {
 
 impl Default for Bindings {
     fn default() -> Self {
-        let mut bindings = Bindings::new(0.1f32, 0.5f32);
+        let mut bindings = Bindings::new(0.1f32, 0.5f32, 0.5f32);
         bindings.bind(VirtualKeyCode::W, Action::CameraMoveNY);
         bindings.bind(VirtualKeyCode::S, Action::CameraMovePY);
         bindings.bind(VirtualKeyCode::A, Action::CameraMovePX);
         bindings.bind(VirtualKeyCode::D, Action::CameraMoveNX);
         bindings.bind(VirtualKeyCode::Left, Action::RotateShapePY);
         bindings.bind(VirtualKeyCode::Right, Action::RotateShapeNY);
+        bindings.bind(VirtualKeyCode::Up, Action::RotateShapePX);
+        bindings.bind(VirtualKeyCode::Down, Action::RotateShapeNX);
 
         bindings
     }
@@ -164,9 +170,10 @@ impl Default for Bindings {
 
 pub fn handle_keyboard<T: ActionState>(
     event: &KeyboardInput, bindings: &Bindings, state: &mut T,
-) -> Option<(Camera, RotY)> {
+) -> Option<(Camera, RotX, RotY)> {
     let ci = bindings.camera_increment;
-    let ri = bindings.rotation_increment;
+    let xri = bindings.x_rotation_increment;
+    let yri = bindings.y_rotation_increment;
     let vkc = event.virtual_keycode
         .unwrap_or(VirtualKeyCode::Escape); // Escape is already caught beforehand.
 
@@ -177,7 +184,11 @@ pub fn handle_keyboard<T: ActionState>(
                 ElementState::Pressed => state.on(*action),
                 ElementState::Released => state.off(*action),
             }
-            (state.camera_increment(ci), state.y_rotation_increment(ri))
+            (
+                state.camera_increment(ci),
+                state.x_rotation_increment(xri),
+                state.y_rotation_increment(yri),
+            )
         })
 }
 
