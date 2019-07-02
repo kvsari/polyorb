@@ -5,6 +5,13 @@ use std::mem;
 use derive_getters::Getters;
 use cgmath::{Point2, Point3, Vector3};
 
+/// Produce the golden ratio of 1.6180339887...
+/// Why not just a constant? Why not constant function? Because rust hasn't yet made sqrt
+/// a const function. I don't know why. It's a maths function. It should be easy.
+pub fn golden_ratio_f32() -> f32 {
+    (1.0 + 5f32.sqrt()) / 2.0
+}
+
 #[derive(Debug, Copy, Clone, Getters)]
 pub struct Vertex {
     position: [f32; 3],
@@ -67,55 +74,77 @@ pub fn square(len: f32) -> ([Point2<f32>; 4], [u16; 6]) {
     (points, [0, 1, 2, 2, 3, 0])
 }
 
-pub fn cube_01(colour: [f32; 3]) -> ([Vertex; 24], [u16; 36]) {
-    let points = [
-        // top (0, 0, 1)
-        Vertex::new([-1f32, -1f32, 1f32], [0f32, 0f32, 1f32], colour),
-        Vertex::new([1f32, -1f32, 1f32], [0f32, 0f32, 1f32], colour),
-        Vertex::new([1f32, 1f32, 1f32], [0f32, 0f32, 1f32], colour),
-        Vertex::new([-1f32, 1f32, 1f32], [0f32, 0f32, 1f32], colour),
-        
-        // bottom (0, 0, -1)
-        Vertex::new([-1f32, 1f32, -1f32], [0f32, 0f32, -1f32], colour),
-        Vertex::new([1f32, 1f32, -1f32], [0f32, 0f32, -1f32], colour),
-        Vertex::new([1f32, -1f32, -1f32], [0f32, 0f32, -1f32], colour),
-        Vertex::new([-1f32, -1f32, -1f32], [0f32, 0f32, -1f32], colour),
-        
-        // right (1, 0, 0)
-        Vertex::new([1f32, -1f32, -1f32], [1f32, 0f32, 0f32], colour),
-        Vertex::new([1f32, 1f32, -1f32], [1f32, 0f32, 0f32], colour),
-        Vertex::new([1f32, 1f32, 1f32], [1f32, 0f32, 0f32], colour),
-        Vertex::new([1f32, -1f32, 1f32], [1f32, 0f32, 0f32], colour),
-        
-        // left (-1, 0, 0)
-        Vertex::new([-1f32, -1f32, 1f32], [-1f32, 0f32, 0f32], colour),
-        Vertex::new([-1f32, 1f32, 1f32], [-1f32, 0f32, 0f32], colour),
-        Vertex::new([-1f32, 1f32, -1f32], [-1f32, 0f32, 0f32], colour),
-        Vertex::new([-1f32, -1f32, -1f32], [-1f32, 0f32, 0f32], colour),
-        
-        // front (0, 1, 0)
-        Vertex::new([1f32, 1f32, -1f32], [0f32, 1f32, 0f32], colour),
-        Vertex::new([-1f32, 1f32, -1f32], [0f32, 1f32, 0f32], colour),
-        Vertex::new([-1f32, 1f32, 1f32], [0f32, 1f32, 0f32], colour),
-        Vertex::new([1f32, 1f32, 1f32], [0f32, 1f32, 0f32], colour),
-        
-        // back (0, -1, 0)
-        Vertex::new([1f32, -1f32, 1f32], [0f32, -1f32, 0f32], colour),
-        Vertex::new([-1f32, -1f32, 1f32], [0f32, -1f32, 0f32], colour),
-        Vertex::new([-1f32, -1f32, -1f32], [0f32, -1f32, 0f32], colour),
-        Vertex::new([1f32, -1f32, -1f32], [0f32, -1f32, 0f32], colour),
+pub fn cube(len: f32, colour: [f32; 3]) -> (Vec<Vertex>, Vec<u16>) {
+    // Holdover from debugging the dodecahedron.
+    let cl = len;
+    
+    // Get the cube first. p/n means positive of negative `cl` on the x,y and z.    
+    let c_ppp = [cl, cl, cl];
+    let c_npp = [cl.neg(), cl, cl];
+    let c_nnp = [cl.neg(), cl.neg(), cl];
+    let c_pnp = [cl, cl.neg(), cl];
+    let c_ppn = [cl, cl, cl.neg()];
+    let c_npn = [cl.neg(), cl, cl.neg()];
+    let c_nnn = [cl.neg(), cl.neg(), cl.neg()];
+    let c_pnn = [cl, cl.neg(), cl.neg()];
+
+    let n1 = triangle_normal([&c_ppp, &c_npp, &c_nnp]);
+    let n2 = triangle_normal([&c_npn, &c_ppn, &c_nnn]);
+    let n3 = triangle_normal([&c_ppp, &c_pnp, &c_ppn]);
+    let n4 = triangle_normal([&c_nnp, &c_npp, &c_npn]);
+    let n5 = triangle_normal([&c_npp, &c_ppp, &c_ppn]);
+    let n6 = triangle_normal([&c_pnp, &c_nnp, &c_pnn]);
+
+    // Vertexes. Each face will be indexed to produce two triangles.
+    let vertexes = vec![
+        // Top
+        Vertex::new(c_ppp, n1, colour),
+        Vertex::new(c_npp, n1, colour),
+        Vertex::new(c_nnp, n1, colour),
+        Vertex::new(c_pnp, n1, colour),
+
+        // Bottom
+        Vertex::new(c_npn, n2, colour),
+        Vertex::new(c_ppn, n2, colour),
+        Vertex::new(c_pnn, n2, colour),
+        Vertex::new(c_nnn, n2, colour),
+
+        // Right
+        Vertex::new(c_ppp, n3, colour),
+        Vertex::new(c_pnp, n3, colour),
+        Vertex::new(c_pnn, n3, colour),
+        Vertex::new(c_ppn, n3, colour),
+
+        // Left
+        Vertex::new(c_nnp, n4, colour),
+        Vertex::new(c_npp, n4, colour),
+        Vertex::new(c_npn, n4, colour),
+        Vertex::new(c_nnn, n4, colour),
+
+        // Front
+        Vertex::new(c_npp, n5, colour),
+        Vertex::new(c_ppp, n5, colour),
+        Vertex::new(c_ppn, n5, colour),
+        Vertex::new(c_npn, n5, colour),
+
+        // Back
+        Vertex::new(c_pnp, n6, colour),
+        Vertex::new(c_nnp, n6, colour),
+        Vertex::new(c_nnn, n6, colour),
+        Vertex::new(c_pnn, n6, colour),
     ];
 
-    let indexes = [
-        0, 1, 2, 2, 3, 0, // top
-        4, 5, 6, 6, 7, 4, // bottom
-        8, 9, 10, 10, 11, 8, // right
-        12, 13, 14, 14, 15, 12, // left
-        16, 17, 18, 18, 19, 16, // front
-        20, 21, 22, 22, 23, 20, // back
+    // Two triangles per face.
+    let indexes = vec![
+        0, 1, 2, 2, 3, 0,       // Top
+        4, 5, 6, 6, 7, 4,       // Bottom
+        8, 9, 10, 10, 11, 8,    // Right
+        12, 13, 14, 14, 15, 12, // Left
+        16, 17, 18, 18, 19, 16, // Front
+        20, 21, 22, 22, 23, 20, // Back
     ];
 
-    (points, indexes)
+    (vertexes, indexes)
 }
 
 fn triangle_normal(points: [&[f32; 3]; 3]) -> [f32; 3] {
@@ -504,6 +533,169 @@ pub fn icosahedron(len: f32, colour: [f32; 3]) -> (Vec<Vertex>, Vec<u16>) {
     (vertexes, indexes)
 }
 
+/// Build a dodecahedron by first calculating the 20 verteces via the cube and three
+/// orthogonal rectangles.
+pub fn dodecahedron(len: f32, colour: [f32; 3]) -> (Vec<Vertex>, Vec<u16>) {    
+    // Maybie half the length to get started? We are centering on (0, 0, 0).
+    let len = len / 2f32;
+
+    // Get the golden ratio
+    let g = golden_ratio_f32();
+
+    // Compute the verteces.
+
+    // The cube is the line crossing the two sides of a pentagon. Thus it is the `len * g`.
+    let cl = len * g;
+    // Get the cube first. p/n means positive of negative `cl` on the x,y and z.    
+    let c_ppp = [cl, cl, cl];
+    let c_npp = [cl.neg(), cl, cl];
+    let c_nnp = [cl.neg(), cl.neg(), cl];
+    let c_pnp = [cl, cl.neg(), cl];
+    let c_ppn = [cl, cl, cl.neg()];
+    let c_npn = [cl.neg(), cl, cl.neg()];
+    let c_nnn = [cl.neg(), cl.neg(), cl.neg()];
+    let c_pnn = [cl, cl.neg(), cl.neg()];
+
+    // Now we get our rectangles using the golden ratio we prepared earlier. p/n again means
+    // positive or negative values but this time the coordinates are denoted in the name.
+
+    // The long edges of the rectangle are the len * g * g or cl * g.
+    let s = len;
+    let l = cl * g;
+
+    // Rectangle that lies on the x y plane.
+    let r_xy_pp = [l, s, 0f32];
+    let r_xy_pn = [l, s.neg(), 0f32];
+    let r_xy_nn = [l.neg(), s.neg(), 0f32];
+    let r_xy_np = [l.neg(), s, 0f32];
+
+    // Rectangle that lies on the x z plane.
+    let r_xz_pp = [s, 0f32, l];
+    let r_xz_pn = [s, 0f32, l.neg()];
+    let r_xz_nn = [s.neg(), 0f32, l.neg()];
+    let r_xz_np = [s.neg(), 0f32, l];
+
+    // Rectangle that lies on the y z plane.
+    let r_yz_pp = [0f32, l, s];
+    let r_yz_pn = [0f32, l, s.neg()];
+    let r_yz_nn = [0f32, l.neg(), s.neg()];
+    let r_yz_np = [0f32, l.neg(), s];
+
+    /*
+    let n1 = triangle_normal([&r_xy_pp, &r_xy_pn, &r_xy_nn]);
+    let n2 = triangle_normal([&r_xz_pp, &r_xz_pn, &r_xz_nn]);
+    let n3 = triangle_normal([&r_yz_pp, &r_yz_pn, &r_yz_nn]);
+
+    // Render each rectangle to ensure it's correct.
+    let vertexes = vec![
+        /*
+        Vertex::new(r_xy_pp, n1, colour),
+        Vertex::new(r_xy_pn, n1, colour),
+        Vertex::new(r_xy_nn, n1, colour),
+        Vertex::new(r_xy_np, n1, colour),
+        */
+
+        /*
+        Vertex::new(r_xz_pp, n2, colour),
+        Vertex::new(r_xz_pn, n2, colour),
+        Vertex::new(r_xz_nn, n2, colour),
+        Vertex::new(r_xz_np, n2, colour),
+        */
+
+        Vertex::new(r_yz_pp, n3, colour),
+        Vertex::new(r_yz_pn, n3, colour),
+        Vertex::new(r_yz_nn, n3, colour),
+        Vertex::new(r_yz_np, n3, colour),
+
+    ];
+
+    let indexes = vec![
+        0, 1, 2, 2, 3, 0, /* and reverse! */ 2, 1, 0, 0, 3, 2,
+    ];
+    */
+
+    // Get the normals for flat shading our pentagons. We only need a triangle.
+    let n01 = triangle_normal([&c_nnp, &r_yz_np, &c_pnp]);
+
+    // debug colour;
+    let dcolour: [f32; 3] = [1f32, 0f32, 0f32];
+
+    // Define the vertexes for each pentagon. We trace three triangles using the indexes.
+    let vertexes = vec![
+        // P1
+        Vertex::new(r_xz_np, n01, colour),
+        Vertex::new(c_nnp, n01, colour),
+        Vertex::new(r_yz_np, n01, colour),
+        Vertex::new(c_pnp, n01, colour),
+        Vertex::new(r_xz_pp, n01, colour),
+    ];
+
+    let indexes = vec![
+        // P1
+        0, 1, 2, /*T1*/ 0, 2, 4, /*T2*/ 4, 2, 3, /*T3*/
+    ];
+
+    /*
+    let n1 = triangle_normal([&c_ppp, &c_npp, &c_nnp]);
+    let n2 = triangle_normal([&c_npn, &c_ppn, &c_nnn]);
+    let n3 = triangle_normal([&c_ppp, &c_pnp, &c_ppn]);
+    let n4 = triangle_normal([&c_nnp, &c_npp, &c_npn]);
+    let n5 = triangle_normal([&c_npp, &c_ppp, &c_ppn]);
+    let n6 = triangle_normal([&c_pnp, &c_nnp, &c_pnn]);
+
+    // Check that we've got the cube correctly
+    let vertexes = vec![
+        // Top
+        Vertex::new(c_ppp, n1, colour),
+        Vertex::new(c_npp, n1, colour),
+        Vertex::new(c_nnp, n1, colour),
+        Vertex::new(c_pnp, n1, colour),
+
+        // Bottom
+        Vertex::new(c_npn, n2, colour),
+        Vertex::new(c_ppn, n2, colour),
+        Vertex::new(c_pnn, n2, colour),
+        Vertex::new(c_nnn, n2, colour),
+
+        // Right
+        Vertex::new(c_ppp, n3, colour),
+        Vertex::new(c_pnp, n3, colour),
+        Vertex::new(c_pnn, n3, colour),
+        Vertex::new(c_ppn, n3, colour),
+
+        // Left
+        Vertex::new(c_nnp, n4, colour),
+        Vertex::new(c_npp, n4, colour),
+        Vertex::new(c_npn, n4, colour),
+        Vertex::new(c_nnn, n4, colour),
+
+        // Front
+        Vertex::new(c_npp, n5, colour),
+        Vertex::new(c_ppp, n5, colour),
+        Vertex::new(c_ppn, n5, colour),
+        Vertex::new(c_npn, n5, colour),
+
+        // Back
+        Vertex::new(c_pnp, n6, colour),
+        Vertex::new(c_nnp, n6, colour),
+        Vertex::new(c_nnn, n6, colour),
+        Vertex::new(c_pnn, n6, colour),
+    ];
+
+    // Two triangles per face.
+    let indexes = vec![
+        0, 1, 2, 2, 3, 0,       // Top
+        4, 5, 6, 6, 7, 4,       // Bottom
+        8, 9, 10, 10, 11, 8,    // Right
+        12, 13, 14, 14, 15, 12, // Left
+        16, 17, 18, 18, 19, 16, // Front
+        20, 21, 22, 22, 23, 20, // Back
+    ];
+    */
+
+    (vertexes, indexes)
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
@@ -519,6 +711,12 @@ mod test {
         println!("{:?}", &n);
 
         assert!(n == [0f32, 0f32, 1f32]);
+    }
+
+    #[test]
+    fn golden_ratio_golden() {
+        let g = 1.6180339887;
+        assert!(g == golden_ratio_f32());
     }
 
     /*
