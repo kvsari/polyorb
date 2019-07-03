@@ -211,30 +211,6 @@ pub fn tetrahedron(len: f32, colour: [f32; 3]) -> ([Vertex; 12], [u16; 12]) {
     let top_point_normal = average_normals(&[n1, n2, n4]);
     let depth_point_normal = average_normals(&[n2, n3, n4]);
 
-    /*
-    let vertexes = [
-        // T1
-        Vertex::new(right_point, right_point_normal, colour),
-        Vertex::new(left_point, left_point_normal, colour),
-        Vertex::new(top_point, top_point_normal, colour),
-        
-        // T2
-        Vertex::new(left_point, left_point_normal, colour),
-        Vertex::new(depth_point, depth_point_normal, colour),
-        Vertex::new(top_point, top_point_normal, colour),
-        
-        // T3
-        Vertex::new(left_point, left_point_normal, colour),
-        Vertex::new(right_point, right_point_normal, colour),
-        Vertex::new(depth_point, depth_point_normal, colour),
-
-        // T4
-        Vertex::new(depth_point, depth_point_normal, colour),
-        Vertex::new(right_point, right_point_normal, colour),
-        Vertex::new(top_point, top_point_normal, colour),
-    ];
-     */
-
     let vertexes = [
         // T1
         Vertex::new(right_point, n1, colour),
@@ -581,41 +557,21 @@ pub fn dodecahedron(len: f32, colour: [f32; 3]) -> (Vec<Vertex>, Vec<u16>) {
     let r_yz_nn = [0f32, l.neg(), s.neg()];
     let r_yz_np = [0f32, l.neg(), s];
 
-    /*
-    let n1 = triangle_normal([&r_xy_pp, &r_xy_pn, &r_xy_nn]);
-    let n2 = triangle_normal([&r_xz_pp, &r_xz_pn, &r_xz_nn]);
-    let n3 = triangle_normal([&r_yz_pp, &r_yz_pn, &r_yz_nn]);
-
-    // Render each rectangle to ensure it's correct.
-    let vertexes = vec![
-        /*
-        Vertex::new(r_xy_pp, n1, colour),
-        Vertex::new(r_xy_pn, n1, colour),
-        Vertex::new(r_xy_nn, n1, colour),
-        Vertex::new(r_xy_np, n1, colour),
-        */
-
-        /*
-        Vertex::new(r_xz_pp, n2, colour),
-        Vertex::new(r_xz_pn, n2, colour),
-        Vertex::new(r_xz_nn, n2, colour),
-        Vertex::new(r_xz_np, n2, colour),
-        */
-
-        Vertex::new(r_yz_pp, n3, colour),
-        Vertex::new(r_yz_pn, n3, colour),
-        Vertex::new(r_yz_nn, n3, colour),
-        Vertex::new(r_yz_np, n3, colour),
-
-    ];
-
-    let indexes = vec![
-        0, 1, 2, 2, 3, 0, /* and reverse! */ 2, 1, 0, 0, 3, 2,
-    ];
-    */
-
     // Get the normals for flat shading our pentagons. We only need a triangle.
     let n01 = triangle_normal([&c_nnp, &r_yz_np, &c_pnp]);
+    let n02 = triangle_normal([&r_yz_pp, &c_nnp, &r_xz_nn]);
+    let n03 = triangle_normal([&r_xy_pn, &c_pnp, &r_yz_np]);
+    let n04 = triangle_normal([&r_xy_nn, &c_nnn, &r_yz_nn]);
+    let n05 = triangle_normal([&r_xy_nn, &c_nnp, &r_xz_np]); // broken?
+    let n06 = triangle_normal([&r_xy_pp, &c_ppp, &r_xz_pp]);
+    let n07 = triangle_normal([&r_xy_np, &c_npn, &r_xz_nn]);
+    let n08 = triangle_normal([&r_xy_pn, &c_pnn, &r_xz_pn]);
+    let n09 = triangle_normal([&r_xz_pp, &c_ppp, &r_yz_pp]);
+    let n10 = triangle_normal([&r_xz_nn, &c_npn, &r_yz_pn]);
+    let n11 = triangle_normal([&r_yz_pp, &c_ppp, &r_xy_pp]);
+    let n12 = triangle_normal([&r_yz_pn, &c_npn, &r_xy_np]);
+
+    println!("{:?}\n{:?}", &n02, &n05);
 
     // debug colour;
     let dcolour: [f32; 3] = [1f32, 0f32, 0f32];
@@ -628,70 +584,122 @@ pub fn dodecahedron(len: f32, colour: [f32; 3]) -> (Vec<Vertex>, Vec<u16>) {
         Vertex::new(r_yz_np, n01, colour),
         Vertex::new(c_pnp, n01, colour),
         Vertex::new(r_xz_pp, n01, colour),
+
+        // P2
+        Vertex::new(r_yz_np, n02, colour),
+        Vertex::new(c_nnp, n02, colour),
+        Vertex::new(r_xy_nn, n02, colour),
+        Vertex::new(c_nnn, n02, colour),
+        Vertex::new(r_yz_nn, n02, colour),
+
+        // P3
+        Vertex::new(r_yz_nn, n03, colour),
+        Vertex::new(c_pnn, n03, colour),
+        Vertex::new(r_xy_pn, n03, colour),
+        Vertex::new(c_pnp, n03, colour),
+        Vertex::new(r_yz_np, n03, colour),
+
+        // P4
+        Vertex::new(r_xz_pn, n04, colour),
+        Vertex::new(c_pnn, n04, colour),
+        Vertex::new(r_yz_nn, n04, colour),
+        Vertex::new(c_nnn, n04, colour),
+        Vertex::new(r_xz_nn, n04, colour),
+
+        // P5
+        Vertex::new(r_xy_nn, n05, colour),
+        Vertex::new(c_nnp, n05, colour),
+        Vertex::new(r_xz_np, n05, colour),
+        Vertex::new(c_npp, n05, colour),
+        Vertex::new(r_xy_np, n05, colour),
+
+        // P6
+        Vertex::new(r_xy_pp, n06, colour),
+        Vertex::new(c_ppp, n06, colour),
+        Vertex::new(r_xz_pp, n06, colour),
+        Vertex::new(c_pnp, n06, colour),
+        Vertex::new(r_xy_pn, n06, colour),
+
+        // P7
+        Vertex::new(r_xy_np, n07, colour),
+        Vertex::new(c_npn, n07, colour),
+        Vertex::new(r_xz_nn, n07, colour),
+        Vertex::new(c_nnn, n07, colour),
+        Vertex::new(r_xy_nn, n07, colour),
+
+        // P8
+        Vertex::new(r_xy_pn, n08, colour),
+        Vertex::new(c_pnn, n08, colour),
+        Vertex::new(r_xz_pn, n08, colour),
+        Vertex::new(c_ppn, n08, colour),
+        Vertex::new(r_xy_pp, n08, colour),
+
+        // P9
+        Vertex::new(r_xz_pp, n09, colour),
+        Vertex::new(c_ppp, n09, colour),
+        Vertex::new(r_yz_pp, n09, colour),
+        Vertex::new(c_npp, n09, colour),
+        Vertex::new(r_xz_np, n09, colour),
+
+        // P10
+        Vertex::new(r_xz_nn, n10, colour),
+        Vertex::new(c_npn, n10, colour),
+        Vertex::new(r_yz_pn, n10, colour),
+        Vertex::new(c_ppn, n10, colour),
+        Vertex::new(r_xz_pn, n10, colour),
+
+        // P11
+        Vertex::new(r_yz_pp, n11, colour),
+        Vertex::new(c_ppp, n11, colour),
+        Vertex::new(r_xy_pp, n11, colour),
+        Vertex::new(c_ppn, n11, colour),
+        Vertex::new(r_yz_pn, n11, colour),
+
+        // P12
+        Vertex::new(r_yz_pn, n12, colour),
+        Vertex::new(c_npn, n12, colour),
+        Vertex::new(r_xy_np, n12, colour),
+        Vertex::new(c_npp, n12, colour),
+        Vertex::new(r_yz_pp, n12, colour),
     ];
 
     let indexes = vec![
         // P1
         0, 1, 2, /*T1*/ 0, 2, 4, /*T2*/ 4, 2, 3, /*T3*/
+
+        // P2
+        5, 6, 7, /*T1*/ 5, 7, 9, /*T2*/ 9, 7, 8, /*T3*/
+
+        // P3
+        10, 11, 12, /*T1*/ 10, 12, 14, /*T2*/ 14, 12, 13, /*T3*/
+
+        // P4
+        15, 16, 17, /*T1*/ 15, 17, 19, /*T2*/ 19, 17, 18, /*T3*/
+
+        // P5
+        20, 21, 22, /*T1*/ 20, 22, 24, /*T2*/ 24, 22, 23, /*T3*/
+
+        // P6
+        25, 26, 27, /*T1*/ 25, 27, 29, /*T2*/ 29, 27, 28, /*T3*/
+
+        // P7
+        30, 31, 32, /*T1*/ 30, 32, 34, /*T2*/ 34, 32, 33, /*T3*/
+
+        // P8
+        35, 36, 37, /*T1*/ 35, 37, 39, /*T2*/ 39, 37, 38, /*T3*/
+
+        // P9
+        40, 41, 42, /*T1*/ 40, 42, 44, /*T2*/ 44, 42, 43, /*T3*/
+
+        // P10
+        45, 46, 47, /*T1*/ 45, 47, 49, /*T2*/ 49, 47, 48, /*T3*/
+
+        // P11
+        50, 51, 52, /*T1*/ 50, 52, 54, /*T2*/ 54, 52, 53, /*T3*/
+
+        // P12
+        55, 56, 57, /*T1*/ 55, 57, 59, /*T2*/ 59, 57, 58, /*T3*/
     ];
-
-    /*
-    let n1 = triangle_normal([&c_ppp, &c_npp, &c_nnp]);
-    let n2 = triangle_normal([&c_npn, &c_ppn, &c_nnn]);
-    let n3 = triangle_normal([&c_ppp, &c_pnp, &c_ppn]);
-    let n4 = triangle_normal([&c_nnp, &c_npp, &c_npn]);
-    let n5 = triangle_normal([&c_npp, &c_ppp, &c_ppn]);
-    let n6 = triangle_normal([&c_pnp, &c_nnp, &c_pnn]);
-
-    // Check that we've got the cube correctly
-    let vertexes = vec![
-        // Top
-        Vertex::new(c_ppp, n1, colour),
-        Vertex::new(c_npp, n1, colour),
-        Vertex::new(c_nnp, n1, colour),
-        Vertex::new(c_pnp, n1, colour),
-
-        // Bottom
-        Vertex::new(c_npn, n2, colour),
-        Vertex::new(c_ppn, n2, colour),
-        Vertex::new(c_pnn, n2, colour),
-        Vertex::new(c_nnn, n2, colour),
-
-        // Right
-        Vertex::new(c_ppp, n3, colour),
-        Vertex::new(c_pnp, n3, colour),
-        Vertex::new(c_pnn, n3, colour),
-        Vertex::new(c_ppn, n3, colour),
-
-        // Left
-        Vertex::new(c_nnp, n4, colour),
-        Vertex::new(c_npp, n4, colour),
-        Vertex::new(c_npn, n4, colour),
-        Vertex::new(c_nnn, n4, colour),
-
-        // Front
-        Vertex::new(c_npp, n5, colour),
-        Vertex::new(c_ppp, n5, colour),
-        Vertex::new(c_ppn, n5, colour),
-        Vertex::new(c_npn, n5, colour),
-
-        // Back
-        Vertex::new(c_pnp, n6, colour),
-        Vertex::new(c_nnp, n6, colour),
-        Vertex::new(c_nnn, n6, colour),
-        Vertex::new(c_pnn, n6, colour),
-    ];
-
-    // Two triangles per face.
-    let indexes = vec![
-        0, 1, 2, 2, 3, 0,       // Top
-        4, 5, 6, 6, 7, 4,       // Bottom
-        8, 9, 10, 10, 11, 8,    // Right
-        12, 13, 14, 14, 15, 12, // Left
-        16, 17, 18, 18, 19, 16, // Front
-        20, 21, 22, 22, 23, 20, // Back
-    ];
-    */
 
     (vertexes, indexes)
 }
