@@ -2,16 +2,16 @@
 //!
 //! Render various Goldberg polyhedrons.
 
+pub mod scene;
+pub mod light;
+pub mod shader;
+pub mod presentation;
+pub mod platonic_solid;
+
 pub mod show;
 pub mod input;
-//pub mod keyboard;
-//pub mod cube;
-//pub mod space;
 pub mod shape;
 pub mod tetrahedron;
-
-//pub mod triangle_example;
-//pub mod cube_example;
 
 pub use self::show::run;
 
@@ -24,12 +24,3 @@ pub enum PlatonicSolid {
     Dodecahedron,
     Icosahedron,
 }
-
-
-/*
-/// The main data structure of the library.
-pub struct GoldbergPolyhedron {
-    base: PlatonicSolid,
-    
-}
-*/
