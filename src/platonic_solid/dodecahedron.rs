@@ -4,7 +4,8 @@ use std::ops::Neg;
 use cgmath::Point3;
 
 use crate::scene;
-use super::{Vertex, Cached, triangle_normal, golden_ratio_f32};
+use crate::geop::{triangle_normal, golden_ratio};
+use super::{Vertex, Cached};
 
 pub (in crate::platonic_solid) fn dodecahedron(
     len: f32, colour: [f32; 3]
@@ -13,7 +14,7 @@ pub (in crate::platonic_solid) fn dodecahedron(
     let len = len / 2f32;
 
     // Get the golden ratio
-    let g = golden_ratio_f32();
+    let g = golden_ratio();
 
     // Compute the verteces.
 

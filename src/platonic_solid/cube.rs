@@ -4,7 +4,8 @@ use std::ops::Neg;
 use cgmath::Point3;
 
 use crate::scene;
-use super::{Vertex, Cached, triangle_normal};
+use crate::geop::triangle_normal;
+use super::{Vertex, Cached};
 
 pub (in crate::platonic_solid) fn cube(
     len: f32, colour: [f32; 3]

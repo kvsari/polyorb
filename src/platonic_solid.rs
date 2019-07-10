@@ -10,8 +10,6 @@ mod octahedron;
 mod dodecahedron;
 mod icosahedron;
 
-//use self::tetrahedron::Tetrahedron;
-
 /// Made private so as not to clash with `scene::Vertex`.
 #[derive(Debug, Clone)]
 struct Vertex<S: BaseFloat> {
@@ -56,26 +54,6 @@ impl scene::Geometry for Cached<f32> {
             self.index.to_owned()
         )
     }
-}
-
-/// Produce the golden ratio of 1.6180339887...
-/// Why not just a constant? Why not constant function? Because rust hasn't yet made sqrt
-/// a const function. I don't know why. It's a maths function. It should be easy.
-pub fn golden_ratio_f32() -> f32 {
-    (1.0 + 5f32.sqrt()) / 2.0
-}
-
-fn triangle_normal<S: BaseFloat>(
-    p1: Point3<S>, p2: Point3<S>, p3: Point3<S>
-) -> Vector3<S> {
-    let v1 = p1.to_homogeneous().truncate();
-    let v2 = p2.to_homogeneous().truncate();
-    let v3 = p3.to_homogeneous().truncate();
-
-    let v = v2 - v1;
-    let w = v3 - v1;
-
-    v.cross(w) // Normal gets normalized in the shader
 }
 
 macro_rules! platonic {

@@ -4,7 +4,8 @@ use std::ops::Neg;
 use cgmath::Point3;
 
 use crate::scene;
-use super::{Vertex, Cached, triangle_normal};
+use crate::geop::triangle_normal;
+use super::{Vertex, Cached};
 
 /// Raw tetrahedron generation.
 pub (in crate::platonic_solid) fn tetrahedron(
@@ -39,13 +40,6 @@ pub (in crate::platonic_solid) fn tetrahedron(
     let n2 = triangle_normal(left_point, depth_point, top_point);
     let n3 = triangle_normal(left_point, right_point, depth_point);
     let n4 = triangle_normal(depth_point, right_point, top_point);
-
-    /*
-    let left_point_normal = average_normals(&[n1, n2, n3]);
-    let right_point_normal = average_normals(&[n1, n3, n4]);
-    let top_point_normal = average_normals(&[n1, n2, n4]);
-    let depth_point_normal = average_normals(&[n2, n3, n4]);
-    */
 
     let vertices = vec![
         // T1

@@ -4,7 +4,8 @@ use std::ops::Neg;
 use cgmath::Point3;
 
 use crate::scene;
-use super::{Vertex, Cached, triangle_normal}; //, golden_ratio};
+use crate::geop::triangle_normal;
+use super::{Vertex, Cached};
 
 /// Possibly broken if the len is anything other that 1.0.
 ///
