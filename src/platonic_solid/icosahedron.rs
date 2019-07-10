@@ -3,9 +3,8 @@ use std::ops::Neg;
 
 use cgmath::Point3;
 
-use crate::scene;
-use crate::geop::triangle_normal;
-use super::{Vertex, Cached};
+use crate::geop::{triangle_normal, golden_ratio};
+use super::Vertex;
 
 /// Possibly broken if the len is anything other that 1.0.
 ///
@@ -13,12 +12,15 @@ use super::{Vertex, Cached};
 pub (in crate::platonic_solid) fn icosahedron(
     len: f32, colour: [f32; 3]
 ) -> (Vec<Vertex<f32>>, Vec<u16>) {
-    // Build the long side of the golden rectangle.
-    let h_len = len / 2f32;
-    let g_len = h_len + (h_len * 5f32.sqrt()); // broken here if len is other than 1.0.
+
+    // Long side of the golden rectangle.
+    let g_len = len * golden_ratio();
 
     // Now construct three orthogonal golden rectangles centered on (0, 0, 0).
     let g_mid = g_len / 2f32;
+
+    // Short length of the golden rectangle. Since we halved `g_len`, must halve `len` too.
+    let h_len = len / 2f32;
 
     // Rect 1 along X Y.
     let r_xy_tl = Point3::new(g_mid.neg(), h_len, 0f32);

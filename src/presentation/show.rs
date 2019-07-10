@@ -1,6 +1,6 @@
 //! Show something renderable.
 
-use cgmath::{BaseFloat, Rad, Matrix4, Vector3, Euler};
+use cgmath::{Matrix4, Vector3, Euler};
 
 use super::camera::{View, Camera};
 use super::{Rot, Presentation, Renderable};

@@ -3,20 +3,19 @@ use std::ops::Neg;
 
 use cgmath::Point3;
 
-use crate::scene;
 use crate::geop::{triangle_normal, golden_ratio};
-use super::{Vertex, Cached};
+use super::Vertex;
 
 pub (in crate::platonic_solid) fn dodecahedron(
     len: f32, colour: [f32; 3]
 ) -> (Vec<Vertex<f32>>, Vec<u16>) {    
-    // Maybie half the length to get started? We are centering on (0, 0, 0).
+    // Halve length to get started. We are centering on (0, 0, 0).
     let len = len / 2f32;
 
     // Get the golden ratio
     let g = golden_ratio();
 
-    // Compute the verteces.
+    // Compute the vertices.
 
     // The cube is the line crossing the two sides of a pentagon. Thus it is the `len * g`.
     let cl = len * g;

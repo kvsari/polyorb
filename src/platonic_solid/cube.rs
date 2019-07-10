@@ -3,15 +3,14 @@ use std::ops::Neg;
 
 use cgmath::Point3;
 
-use crate::scene;
 use crate::geop::triangle_normal;
-use super::{Vertex, Cached};
+use super::Vertex;
 
 pub (in crate::platonic_solid) fn cube(
     len: f32, colour: [f32; 3]
 ) -> (Vec<Vertex<f32>>, Vec<u16>) {
     // Holdover from debugging the dodecahedron.
-    let cl = len;
+    let cl = len / 2f32;
     
     // Get the cube first. p/n means positive of negative `cl` on the x,y and z.    
     let c_ppp = Point3::new(cl, cl, cl);

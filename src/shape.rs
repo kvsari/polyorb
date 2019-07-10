@@ -2,10 +2,8 @@
 //!
 //! Being kept in repo just in case I'll need this code.
 use std::ops::Neg;
-use std::mem;
 
-use derive_getters::Getters;
-use cgmath::{Point2, Point3, Vector3};
+use cgmath::Point2;
 
 /// Create an equilateral triangle centered on (0, 0). It's up to consumers to
 /// translate/scale/rotate the triangle for their needs.

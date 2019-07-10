@@ -3,9 +3,8 @@ use std::ops::Neg;
 
 use cgmath::Point3;
 
-use crate::scene;
 use crate::geop::triangle_normal;
-use super::{Vertex, Cached};
+use super::Vertex;
 
 pub (in crate::platonic_solid) fn octahedron(
     len: f32, colour: [f32; 3]
@@ -13,7 +12,7 @@ pub (in crate::platonic_solid) fn octahedron(
     // We want to build the anchor square in the center (0, 0, 0) over X, Y.
     let h_len: f32 = len / 2f32;
 
-    // We spell out the formula instead of using `half_len` to avoid confusion.
+    // We spell out the formula instead of using `h_len` to avoid confusion.
     let circumscribed_sphere_radius: f32 = (len / 2f32) * 2f32.sqrt();
 
     // Build our square.

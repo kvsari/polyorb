@@ -1,6 +1,6 @@
 //! Perspective handling and viewport.
 
-use cgmath::{BaseFloat, Rad, Vector3, Point3, Matrix4, Deg};
+use cgmath::{BaseFloat, Rad, Vector3, Point3, Matrix4};
 
 #[derive(Debug, Copy, Clone)]
 pub struct Perspective<S: BaseFloat> {

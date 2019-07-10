@@ -3,7 +3,7 @@ use std::mem;
 
 use derive_getters::Getters;
 use num_traits::identities::Zero;
-use cgmath::{Matrix4, BaseFloat};
+use cgmath::Matrix4;
 
 use crate::presentation::{Initializable, Renderable};
 use crate::light::{Light, LightRaw};
@@ -110,7 +110,7 @@ impl<T: Geometry> Scene<Prepare<T>> {
     pub fn prepare(
         &self, desc: &wgpu::SwapChainDescriptor, device: &mut wgpu::Device,
     ) -> Scene<Ready> {
-        let mut cmd_encoder = device
+        let cmd_encoder = device
             .create_command_encoder(
                 &wgpu::CommandEncoderDescriptor { todo: 0 }
             );
@@ -149,7 +149,7 @@ impl<T: Geometry> Scene<Prepare<T>> {
 
         // TODO: Make number of lights dynamic between 0 to `MAX_LIGHTS`.
         let light_buf_size = (2 * LightRaw::sizeof()) as u32;
-        let mut light_buf_builder = device
+        let light_buf_builder = device
             .create_buffer_mapped(
                 2,
                 wgpu::BufferUsageFlags::UNIFORM | wgpu::BufferUsageFlags::TRANSFER_DST,

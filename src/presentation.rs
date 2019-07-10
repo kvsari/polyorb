@@ -1,7 +1,7 @@
 //! Present the whole thing
 
 use log::{info, trace};
-use cgmath::{Vector3, Euler, Rad, Matrix4, Point3, Deg};
+use cgmath::{Vector3, Rad, Matrix4, Point3, Deg};
 use wgpu::winit;
 
 use crate::input;
@@ -98,7 +98,7 @@ where T: Initializable,
     let mut act_state: u16 = 0;
 
     let surface = instance.create_surface(&window);
-    let mut desc = wgpu::SwapChainDescriptor {
+    let desc = wgpu::SwapChainDescriptor {
         usage: wgpu::TextureUsageFlags::OUTPUT_ATTACHMENT,
         format: wgpu::TextureFormat::Bgra8Unorm,
         width: w_width as u32,

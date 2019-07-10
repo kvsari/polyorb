@@ -3,9 +3,8 @@ use std::ops::Neg;
 
 use cgmath::Point3;
 
-use crate::scene;
 use crate::geop::triangle_normal;
-use super::{Vertex, Cached};
+use super::Vertex;
 
 /// Raw tetrahedron generation.
 pub (in crate::platonic_solid) fn tetrahedron(
