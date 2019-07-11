@@ -5,6 +5,7 @@ use derive_getters::Getters;
 use num_traits::identities::Zero;
 use cgmath::Matrix4;
 
+use crate::shader::CompiledShaders;
 use crate::presentation::{Initializable, Renderable};
 use crate::light::{Light, LightRaw};
 
@@ -51,7 +52,8 @@ pub struct Prepare<T: Geometry> {
 }
 
 pub struct Ready {
-    light_buf: wgpu::Buffer,
+    //light_buf: wgpu::Buffer,
+    //light_count_buf: wgpu::Buffer,
     projection_buf: wgpu::Buffer,
     rotation_buf: wgpu::Buffer,
     vertex_buf: wgpu::Buffer,
@@ -71,8 +73,12 @@ impl Scene<Begin> {
     pub fn new() -> Self {
         Scene { state: Begin }
     }
+
+    pub fn shaders<T: CompiledShaders>(self, shaders: &T) -> Scene<Lights> {
+        self.manual_shaders(shaders.vertex(), shaders.fragment())
+    }
    
-    pub fn shaders(self, vert: &[u8], frag: &[u8]) -> Scene<Lights> {
+    pub fn manual_shaders(self, vert: &[u8], frag: &[u8]) -> Scene<Lights> {
         Scene {
             state: Lights {
                 frag: frag.to_owned(),
@@ -95,10 +101,14 @@ impl Scene<Lights> {
     }
 
     pub fn geometry<T: Geometry>(self, geometry: T) -> Scene<Prepare<T>> {
+        let mut lights = self.state.lights;
+        lights.truncate(MAX_LIGHTS);
+        lights.shrink_to_fit();
+        
         let p = Prepare {
             frag: self.state.frag,
             vert: self.state.vert,
-            lights: self.state.lights,
+            lights,
             geometry,
         };
 
@@ -147,16 +157,28 @@ impl<T: Geometry> Scene<Prepare<T>> {
             .create_buffer_mapped(index.len(), wgpu::BufferUsageFlags::INDEX)
             .fill_from_slice(&index);
 
-        // TODO: Make number of lights dynamic between 0 to `MAX_LIGHTS`.
-        let light_buf_size = (2 * LightRaw::sizeof()) as u32;
+        let light_buf_size = (MAX_LIGHTS * LightRaw::sizeof()) as u32;
         let light_buf_builder = device
             .create_buffer_mapped(
-                2,
+                light_buf_size as usize,
                 wgpu::BufferUsageFlags::UNIFORM | wgpu::BufferUsageFlags::TRANSFER_DST,
-            );        
-        light_buf_builder.data[0] = self.state.lights[0].to_raw();
-        light_buf_builder.data[1] = self.state.lights[1].to_raw();
+            );
+        
+        self.state.lights
+            .iter()
+            .take(MAX_LIGHTS)
+            .enumerate()
+            .for_each(|(num, light)| light_buf_builder.data[num] = light.to_raw());
+                    
         let light_buf = light_buf_builder.finish();
+
+        let light_count = self.state.lights.len() as u32;
+        let light_count_buf = device
+            .create_buffer_mapped(
+                1,
+                wgpu::BufferUsageFlags::UNIFORM | wgpu::BufferUsageFlags::TRANSFER_DST,
+            )
+            .fill_from_slice(&[light_count]);
 
         let bg_layout = device.create_bind_group_layout(
             &wgpu::BindGroupLayoutDescriptor { bindings: &[
@@ -177,6 +199,13 @@ impl<T: Geometry> Scene<Prepare<T>> {
                 // Lights
                 wgpu::BindGroupLayoutBinding {
                     binding: 2,
+                    visibility: wgpu::ShaderStageFlags::FRAGMENT,
+                    ty: wgpu::BindingType::UniformBuffer,
+                },
+
+                // Light Count
+                wgpu::BindGroupLayoutBinding {
+                    binding: 3,
                     visibility: wgpu::ShaderStageFlags::FRAGMENT,
                     ty: wgpu::BindingType::UniformBuffer,
                 },
@@ -214,6 +243,15 @@ impl<T: Geometry> Scene<Prepare<T>> {
                     resource: wgpu::BindingResource::Buffer {
                         buffer: &light_buf,
                         range: 0..light_buf_size,
+                    }
+                },
+
+                // Light count buffer binding (just a single byte!)
+                wgpu::Binding {
+                    binding: 3,
+                    resource: wgpu::BindingResource::Buffer {
+                        buffer: &light_count_buf,
+                        range: 0..1,
                     }
                 },
             ],
@@ -282,7 +320,8 @@ impl<T: Geometry> Scene<Prepare<T>> {
         let index_len = index.len();
         
         let ready = Ready {
-            light_buf,
+            //light_buf,
+            //light_count_buf,
             projection_buf,
             rotation_buf,
             vertex_buf,

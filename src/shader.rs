@@ -26,3 +26,39 @@ pub fn load_vert(name: &str, entry: &str) -> Result<Vec<u8>, Error> {
 pub fn load_frag(name: &str, entry: &str) -> Result<Vec<u8>, Error> {
     load(name, entry, ShaderKind::Fragment)
 }
+
+/// Encapsulated shaders.
+pub trait CompiledShaders {
+    fn fragment(&self) -> &[u8];
+    fn vertex(&self) -> &[u8];
+}
+
+/// Basic flat shader.
+#[derive(Debug, Clone)]
+pub struct FlatShaders {
+    fragment: Vec<u8>,
+    vertex: Vec<u8>,
+}
+
+impl FlatShaders {
+    fn new(fragment: Vec<u8>, vertex: Vec<u8>) -> Self {
+        FlatShaders { fragment, vertex }
+    }
+}
+
+impl CompiledShaders for FlatShaders {   
+    fn fragment(&self) -> &[u8] {
+        self.fragment.as_slice()
+    }
+    
+    fn vertex(&self) -> &[u8] {
+        self.vertex.as_slice()
+    }
+}
+
+pub fn load_flat_shaders() -> Result<impl CompiledShaders, Error> {
+    let vert = load_vert("flat.vert", "main")?;
+    let frag = load_frag("flat.frag", "main")?;
+
+    Ok(FlatShaders::new(frag, vert))
+}

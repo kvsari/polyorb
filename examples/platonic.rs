@@ -21,6 +21,12 @@ pub fn main() -> Result<(), Box<dyn std::error::Error>> {
     );
     let light2 = Light::new(
         cgmath::Point3::new(-5f32, 7f32, 10f32),
+        wgpu::Color { r: 0.5, g: 0.5, b: 1.0, a: 1.0 },
+        45.0,
+        1.0..20.0,
+    );
+    let _light3 = Light::new(
+        cgmath::Point3::new(-5f32, -7f32, 10f32),
         wgpu::Color { r: 1.0, g: 0.5, b: 0.5, a: 1.0 },
         45.0,
         1.0..20.0,
@@ -32,12 +38,13 @@ pub fn main() -> Result<(), Box<dyn std::error::Error>> {
     //let solid = platonic_solid::Dodecahedron::new(1.0, [0.0, 1.0, 0.0]);
     //let solid = platonic_solid::Icosahedron::new(1.0, [0.0, 1.0, 0.0]);
     
-    let s_vert = shader::load_vert("tetrahedron.vert", "main")?;
-    let s_frag = shader::load_frag("tetrahedron.frag", "main")?;
+    let flat_shaders = shader::load_flat_shaders()?;
+    
     let scene = Scene::new()
-        .shaders(&s_vert, &s_frag)
+        .shaders(&flat_shaders)
         .add_light(light1)
         .add_light(light2)
+        //.add_light(light3)
         .geometry(solid);
 
     presentation::run("Platonic Solid", scene)?;
