@@ -2,6 +2,7 @@
 
 use cgmath::{Point3, Vector3, BaseFloat};
 
+use crate::polyhedron::{Polyhedron, VrFc, Seed};
 use crate::scene;
 
 mod tetrahedron;
@@ -89,3 +90,30 @@ platonic!(Cube, cube::cube);
 platonic!(Octahedron, octahedron::octahedron);
 platonic!(Dodecahedron, dodecahedron::dodecahedron);
 platonic!(Icosahedron, icosahedron::icosahedron);
+
+macro_rules! platonic2 {
+    ($name: ident, $function:expr) => {
+        #[derive(Debug, Copy, Clone)]
+        pub struct $name {
+            side_len: f32,
+        }
+
+        impl $name {
+            pub fn new(side_len: f32) -> Self {
+                $name { side_len }
+            }
+
+            pub fn generate(&self) -> Polyhedron<VrFc> {
+                $function(self.side_len)
+            }
+        }
+
+        impl Seed for $name {
+            fn polyhedron(&self) -> Polyhedron<VrFc> {
+                self.generate()
+            }
+        }
+    }
+}
+
+platonic2!(Cube2, cube::cube2);

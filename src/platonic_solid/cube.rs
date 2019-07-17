@@ -3,6 +3,7 @@ use std::ops::Neg;
 
 use cgmath::Point3;
 
+use crate::polyhedron::{Polyhedron, VrFc};
 use crate::geop::triangle_normal;
 use super::Vertex;
 
@@ -79,4 +80,33 @@ pub (in crate::platonic_solid) fn cube(
     ];
 
     (vertexes, indexes)
+}
+
+pub (in crate::platonic_solid) fn cube2(len: f32) -> Polyhedron<VrFc> {
+    // The cube center is at (0, 0, 0) of its local space.
+    let cc = Point3::new(0.0, 0.0, 0.0);
+    let cl = len / 2f32;
+    
+    // Get the cube first. p/n means positive of negative `cl` on the x,y and z.    
+    let c_ppp = Point3::new(cl, cl, cl);
+    let c_npp = Point3::new(cl.neg(), cl, cl);
+    let c_nnp = Point3::new(cl.neg(), cl.neg(), cl);
+    let c_pnp = Point3::new(cl, cl.neg(), cl);
+    let c_ppn = Point3::new(cl, cl, cl.neg());
+    let c_npn = Point3::new(cl.neg(), cl, cl.neg());
+    let c_nnn = Point3::new(cl.neg(), cl.neg(), cl.neg());
+    let c_pnn = Point3::new(cl, cl.neg(), cl.neg());
+
+    let vertices: [Point3<f32>; 8] = [
+        c_ppp, c_npp, c_nnp, c_pnp, c_ppn, c_npn, c_nnn, c_pnn,
+    ];
+
+    let top    = [0, 1, 2, 3];
+    let bottom = [4, 5, 6, 7];
+    let right  = [0, 3, 7, 4];
+    let left   = [2, 1, 5, 6];
+    let front  = [1, 0, 4, 5];
+    let back   = [3, 2, 6, 7];
+    
+    Polyhedron::new(cc, &vertices, &[&top, &bottom, &right, &left, &front, &back])
 }

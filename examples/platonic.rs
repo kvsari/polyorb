@@ -32,11 +32,11 @@ pub fn main() -> Result<(), Box<dyn std::error::Error>> {
         1.0..20.0,
     );
     
-    let solid = platonic_solid::Tetrahedron::new(1.0, [0.0, 1.0, 0.0]);
+    //let solid = platonic_solid::Tetrahedron::new(1.0, [0.0, 1.0, 0.0]);
     //let solid = platonic_solid::Cube::new(1.0, [0.0, 1.0, 0.0]);
     //let solid = platonic_solid::Octahedron::new(1.0, [0.0, 1.0, 0.0]);
     //let solid = platonic_solid::Dodecahedron::new(1.0, [0.0, 1.0, 0.0]);
-    //let solid = platonic_solid::Icosahedron::new(1.0, [0.0, 1.0, 0.0]);
+    let solid = platonic_solid::Icosahedron::new(1.0, [0.0, 1.0, 0.0]);
     
     let flat_shaders = shader::load_flat_shaders()?;
     

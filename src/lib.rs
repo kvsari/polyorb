@@ -10,3 +10,4 @@ pub mod light;
 pub mod shader;
 pub mod presentation;
 pub mod platonic_solid;
+pub mod polyhedron;
