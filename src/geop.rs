@@ -1,7 +1,7 @@
 //! # Geometry Operations
 //!
 //! Common geomtery data types and operations that are used in polyhedron generation.
-use std::ops;
+//use std::ops;
 
 use cgmath::{Point3, Vector3, BaseFloat};
 use cgmath::prelude::InnerSpace;

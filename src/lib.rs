@@ -8,6 +8,7 @@ pub mod input;
 pub mod scene;
 pub mod light;
 pub mod shader;
+pub mod presenter;
 pub mod presentation;
 pub mod platonic_solid;
 pub mod polyhedron;
