@@ -35,6 +35,27 @@ pub trait Geometry {
     fn geometry(&self) -> (Vec<Vertex>, Vec<u16>);
 }
 
+#[derive(Debug, Clone)]
+pub struct Cached {
+    vertices: Vec<Vertex>,
+    index: Vec<u16>,
+}
+
+impl Cached {
+    pub fn new(vertices: &[Vertex], index: &[u16]) -> Self {
+        Cached {
+            vertices: vertices.to_owned(),
+            index: index.to_owned(),
+        }
+    }
+}
+
+impl Geometry for Cached {
+    fn geometry(&self) -> (Vec<Vertex>, Vec<u16>) {
+        (self.vertices.to_owned(), self.index.to_owned())
+    }
+}
+
 /// Begin construction of a new `Scene`.
 pub struct Begin;
 

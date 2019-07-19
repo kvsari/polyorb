@@ -102,7 +102,7 @@ pub (in crate::platonic_solid) fn cube2(len: f32) -> Polyhedron<VtFc> {
     ];
 
     let top    = [0, 1, 2, 3];
-    let bottom = [4, 5, 6, 7];
+    let bottom = [7, 6, 5, 4];
     let right  = [0, 3, 7, 4];
     let left   = [2, 1, 5, 6];
     let front  = [1, 0, 4, 5];

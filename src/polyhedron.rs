@@ -8,6 +8,7 @@ use std::{fmt, error};
 use cgmath::{Point3, Vector3};
 
 use crate::geop;
+use crate::planar;
 
 #[derive(Debug, Copy, Clone)]
 pub enum SeedSolid {
@@ -106,7 +107,7 @@ impl ConwayDescription {
         }
     }
 
-    pub fn seed<S: Seed>(&mut self, seed: &S) -> Result<&mut Self, OpError> {
+    pub fn seed<S: Seed>(mut self, seed: &S) -> Result<Self, OpError> {
         if !self.operations.is_empty() {
             Err(OpError::AlreadyHasSeed)
         } else {
@@ -189,6 +190,21 @@ impl Polyhedron<VtFc> {
                 normals: normals,
             }
         }
+    }
+}
+
+impl Polyhedron<VtFcNm> {
+    pub fn faces(&self) -> impl Iterator<Item = planar::Polygon<f32>> + '_ {
+        self.data.faces
+            .iter()
+            .map(move |vertex_indexes| {
+                vertex_indexes
+                    .iter()
+                    .map(move |i| self.data.vertices[*i].clone())
+                    .collect::<Vec<Point3<f32>>>()
+            })
+            .enumerate()
+            .map(move |(i, v)| planar::Polygon::new(&v, self.data.normals[i].clone()))
     }
 }
 

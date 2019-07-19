@@ -25,38 +25,6 @@ impl<S: BaseFloat> Vertex<S> {
     }
 }
 
-#[derive(Debug, Clone)]
-pub struct Cached<S: BaseFloat> {
-    vertices: Vec<Vertex<S>>,
-    index: Vec<u16>,
-}
-
-impl<S: BaseFloat> Cached<S> {
-    fn new(vertices: &[Vertex<S>], index: &[u16]) -> Self {
-        Cached {
-            vertices: vertices.to_owned(),
-            index: index.to_owned(),
-        }
-    }
-}
-
-impl scene::Geometry for Cached<f32> {
-    fn geometry(&self) -> (Vec<scene::Vertex>, Vec<u16>) {
-        (
-            self.vertices
-                .iter()
-                .map(|v| scene::Vertex::new(
-                    [v.position.x, v.position.y, v.position.z],
-                    [v.normal.x, v.normal.y, v.normal.z],
-                    v.colour
-                ))
-                .collect(),
-            
-            self.index.to_owned()
-        )
-    }
-}
-
 macro_rules! platonic {
     ($name:ident, $function:expr) => {
         #[derive(Debug, Copy, Clone)]
@@ -70,9 +38,18 @@ macro_rules! platonic {
                 $name { side_len, colour }
             }
 
-            pub fn generate(&self) -> Cached<f32> {
+            pub fn generate(&self) -> scene::Cached {
                 let (vertices, index) = $function(self.side_len, self.colour);
-                Cached::new(&vertices, &index)
+                let vertices = vertices
+                    .into_iter()
+                    .map(|v| scene::Vertex::new(
+                        [v.position.x, v.position.y, v.position.z],
+                        [v.normal.x, v.normal.y, v.normal.z],
+                        v.colour
+                    ))
+                    .collect::<Vec<scene::Vertex>>();
+                
+                scene::Cached::new(&vertices, &index)
             }
         }
 
