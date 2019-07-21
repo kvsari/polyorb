@@ -49,42 +49,55 @@ fn average_normals(normals: &[Vector3<S>]) -> Vector3<S> {
 }
  */
 
-/*
-/// Calculate the centroid of a polygon using a super simple averaging of vertices.
-pub fn simple_centroid<S: BaseFloat>(vertices: &[Point3<S>]) -> Point3<S> {
-    Point3::new(0.0, 0.0, 0.0)
-}
- */
-
-/*
-/// Also known as the centroid.
-pub fn planar_triangle_vertex_average<S: BaseFloat + ops::Add>(
-    p1: Point3<S>, p2: Point3<S>, p3: Point3<S>
+pub fn sum_three_points<S: BaseFloat>(
+    p1: &Point3<S>, p2: &Point3<S>, p3: &Point3<S>
 ) -> Point3<S> {
-    (p1 + p2 + p3) / 3.0
-}
-
-pub fn planar_triangle_area<S: BaseFloat>(
-    p1: Point3<S>, p2: Point3<S>, p3: Point3<S>
-) -> <S> {
-    let v1 = p1.to_homogeneous().truncate();
-    let v2 = p2.to_homogeneous().truncate();
-    let v3 = p3.to_homogeneous().truncate();
-
-    (v2 - v1).cross(v3 - v1).magnitude()
+    Point3::new(
+        p1.x + p2.x + p3.x,
+        p1.y + p2.y + p3.y,
+        p1.z + p2.z + p3.z,
+    )
 }
 
 /// We compute the centroid of the convex planar polygon by splitting it into 3 vertex
 /// facets (triangles). Then the centroid and area is calculated for each triangle and
-/// summed together and divided.
-pub fn convex_planar_polygon_centroid<S: BaseFloat>(vertices: &[Point3<S>]) -> Point3<S> {
-    // Break into triangles
+/// summed together and divided. This function assumes that there will be at least three
+/// vertices and they all lie on the same plane if there are more than three.
+///
+/// Using [this formula](http://paulbourke.net/geometry/polygonmesh/). You need to scroll
+/// down most of the page. It's 'Centroid of a 3D shell described by 3 vertex facets'.
+pub fn convex_planar_polygon_centroid(vertices: &[Point3<f32>]) -> Point3<f32> {
+    // Break into triangles by rotating on a starting axis. This works because it's
+    // assumed to be a convex polygon.
+    let p1 = vertices[0];
 
-    let axis = vertices[0];
+    let mut summed_area = 0.0;
+    let mut summed_point_area: Point3<f32> = Point3::new(0.0, 0.0, 0.0);
+    
+    for i in 1..(vertices.len() - 1) {
+        let p2 = vertices[i];
+        let p3 = vertices[i + 1];
 
-    for i in 1..vertices.len() {
+        let average = sum_three_points(&p1, &p2, &p3) / 3.0;
+        let area = (p2 - p1).cross(p3 - p1).magnitude();
+        summed_point_area.x += area * average.x;
+        summed_point_area.y += area * average.y;
+        summed_point_area.z += area * average.z;
         
+        summed_area += area;
     }
+
+    // Centroid time
+    summed_point_area / summed_area
+}
+
+/*
+/// A cheap and 'innacurate' form of calculating a centroid. By not taking the area into
+/// question, the center moves 'out' of the planar polygon like the point of a pyramid
+/// rising from the sand. This is technically wrong but when used for the Conway Dual
+/// operation it ensures that the polyhedron doesn't shrink.
+pub fn polyhedron_face_center(vertices: &[Point3<f32>]) -> Point3<f32> {
+    
 }
 */
 

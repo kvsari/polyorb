@@ -43,7 +43,7 @@ objekt::clone_trait_object!(Seed);
 #[derive(Debug, Clone)]
 enum ConwayOperation {
     Seed(SeedSolid, Polyhedron<VtFc>),
-//    Dual,
+    Dual,
 }
 
 /// A polyhedron ready to be built. This struct is not to be modified.
@@ -64,6 +64,7 @@ impl Specification {
             .rfold(String::new(), |mut ops, op| -> String {
                 ops.push_str(match op {
                     ConwayOperation::Seed(ss, _) => ss.conway_notation(),
+                    ConwayOperation::Dual => "d",
                 });
                 
                 ops
@@ -88,8 +89,13 @@ impl Specification {
         self.operations
             .iter()
             .skip(1)
-            .fold(seed, |s, op| {
-                s
+            .fold(seed, |p, op| match op {
+                ConwayOperation::Dual => {
+                    let p = p.centroidize();
+
+                    p.downgrade()
+                },
+                _ => panic!("Second seed snuck in."),
             })
     }
 }
@@ -116,12 +122,14 @@ impl ConwayDescription {
         }
     }
 
-    /*
     pub fn dual(&mut self) -> Result<&mut Self, OpError> {
-
-        Ok(self)
+        if self.operations.is_empty() {
+            Err(OpError::NoSeedSet)
+        } else {
+            self.operations.push(ConwayOperation::Dual);
+            Ok(self)
+        }
     }
-     */
 
     pub fn emit(&self) -> Result<Specification, OpError> {
         if self.operations.is_empty() {
@@ -139,6 +147,15 @@ pub struct VtFc {
     center: Point3<f32>,
     vertices: Vec<Point3<f32>>,
     faces: Vec<Vec<usize>>,
+}
+
+/// Add the centroid for each face.
+#[derive(Debug, Clone)]
+pub struct VtFcCt {
+    center: Point3<f32>,
+    vertices: Vec<Point3<f32>>,
+    faces: Vec<Vec<usize>>,
+    centroids: Vec<Point3<f32>>,
 }
 
 /// Add the normals. Vector of normals and faces are parallel.
@@ -172,6 +189,8 @@ impl Polyhedron<VtFc> {
         }
     }
 
+    /// Calculate the normal for each face and emit a `Polyhedron` with that information
+    /// saved consuming self.
     pub fn normalize(self) -> Polyhedron<VtFcNm> {
         let normals: Vec<Vector3<f32>> = self.data.faces
             .iter()
@@ -187,7 +206,30 @@ impl Polyhedron<VtFc> {
                 center: self.data.center,
                 vertices: self.data.vertices,
                 faces: self.data.faces,
-                normals: normals,
+                normals,
+            }
+        }
+    }
+
+    /// Calculate the centroid for each face and emit a `Polyhedron` with that information
+    /// saved consuming self.
+    pub fn centroidize(self) -> Polyhedron<VtFcCt> {
+        let centroids: Vec<Point3<f32>> = self.data.faces
+            .iter()
+            .map(|v| v
+                 .iter()
+                 .map(|i| self.data.vertices[*i])
+                 .collect::<Vec<Point3<f32>>>()
+            )
+            .map(|v| geop::convex_planar_polygon_centroid(&v))
+            .collect();
+
+        Polyhedron {
+            data: VtFcCt {
+                center: self.data.center,
+                vertices: self.data.vertices,
+                faces: self.data.faces,
+                centroids,
             }
         }
     }
@@ -208,17 +250,32 @@ impl Polyhedron<VtFcNm> {
     }
 }
 
+impl Polyhedron<VtFcCt> {
+    /// Strip out the centroid information.
+    pub fn downgrade(self) -> Polyhedron<VtFc> {
+        Polyhedron {
+            data: VtFc {
+                center: self.data.center,
+                vertices: self.data.vertices,
+                faces: self.data.faces,
+            }
+        }
+    }
+}
+
 #[derive(Debug, Copy, Clone)]
 pub enum OpError {
     NoOperations,
-    AlreadyHasSeed,    
+    AlreadyHasSeed,
+    NoSeedSet,
 }
 
 impl fmt::Display for OpError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "Operation rejected: {}", match self {
-            OpError::NoOperations => "No Conway Operations set.",
+            OpError::NoOperations => "No Conway operations set.",
             OpError::AlreadyHasSeed => "Seed already present.",
+            OpError::NoSeedSet => "No seed has been set to run Conway operations on.",
         })
     }
 }
