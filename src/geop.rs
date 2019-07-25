@@ -91,15 +91,24 @@ pub fn convex_planar_polygon_centroid(vertices: &[Point3<f32>]) -> Point3<f32> {
     summed_point_area / summed_area
 }
 
-/*
 /// A cheap and 'innacurate' form of calculating a centroid. By not taking the area into
 /// question, the center moves 'out' of the planar polygon like the point of a pyramid
 /// rising from the sand. This is technically wrong but when used for the Conway Dual
-/// operation it ensures that the polyhedron doesn't shrink.
+/// operation it ensures that the polyhedron doesn't shrink. Conway Operators after all
+/// only specify operations on 'topology', not how the shape is geometrically calculated.
 pub fn polyhedron_face_center(vertices: &[Point3<f32>]) -> Point3<f32> {
-    
+    let summed: Point3<f32> = vertices
+        .iter()
+        .fold(Point3::new(0.0, 0.0, 0.0), |mut s, p| -> Point3<f32> {
+            s.x += p.x;
+            s.y += p.y;
+            s.z += p.z;
+
+            s
+        });
+
+    summed / (vertices.len() as f32)
 }
-*/
 
 #[cfg(test)]
 mod test {

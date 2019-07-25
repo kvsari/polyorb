@@ -91,7 +91,25 @@ impl Specification {
             .skip(1)
             .fold(seed, |p, op| match op {
                 ConwayOperation::Dual => {
-                    let p = p.centroidize();
+                    let p = p.rising_centroidize();
+                    let vertex_face_members = p.faces_per_vertex();
+
+                    // FOR EACH `vertex_face_members`
+
+                    // Use the face indices to lookup the centroids
+
+                    // Use the centroids to define a new face
+
+                    // Make a copy of the vertex, vectorize and normalize it.
+
+                    // Calculate the plane of that face using a point and the normal.
+
+                    // Calculate the intersection of the vertex as a vector with the plane
+
+                    // The intersection point is our centroid of the new face
+
+                    // Sort the vertices of the new face in clockwize direction using
+                    // then new normal and the new centroid.
 
                     p.downgrade()
                 },
@@ -137,6 +155,36 @@ impl ConwayDescription {
         }
         
         Ok(Specification::new(&self.operations))
+    }
+}
+
+pub trait VertexAndFaceOps {
+    fn vertices_and_faces(&self) -> (&[Point3<f32>], &[Vec<usize>]);
+
+    /// Return the index for each vertex attached with the indexes for each face a
+    /// vertex is part of.
+    fn faces_per_vertex(&self) -> Vec<(usize, Vec<usize>)> {
+        let (points, faces) = self.vertices_and_faces();
+
+        points
+            .iter()
+            .enumerate()
+            .map(|(i, _p)| {
+                let f_v: Vec<usize> = faces
+                    .iter()
+                    .fold(Vec::new(), |mut v, face_indices| -> Vec<usize> {
+                        v.extend(
+                            face_indices
+                                .iter()
+                                .filter(|x| **x == i)
+                        );
+
+                        v
+                    });
+                
+                (i, f_v)
+            })
+            .collect()
     }
 }
 
@@ -229,9 +277,39 @@ impl Polyhedron<VtFc> {
                 center: self.data.center,
                 vertices: self.data.vertices,
                 faces: self.data.faces,
-                centroids,
+                centroids: centroids,
             }
         }
+    }
+
+    /// As above but using a 'flawed' centroid calculation which makes the center point
+    /// rise out of the planar polygon faces. This is to prevent the polyhedron from
+    /// shrinking.
+    pub fn rising_centroidize(self) -> Polyhedron<VtFcCt> {
+        let f_centroids: Vec<Point3<f32>> = self.data.faces
+            .iter()
+            .map(|v| v
+                 .iter()
+                 .map(|i| self.data.vertices[*i])
+                 .collect::<Vec<Point3<f32>>>()
+            )
+            .map(|v| geop::polyhedron_face_center(&v))
+            .collect();
+
+        Polyhedron {
+            data: VtFcCt {
+                center: self.data.center,
+                vertices: self.data.vertices,
+                faces: self.data.faces,
+                centroids: f_centroids,
+            }
+        }
+    }
+}
+
+impl VertexAndFaceOps for Polyhedron<VtFc> {
+    fn vertices_and_faces(&self) -> (&[Point3<f32>], &[Vec<usize>]) {
+        (&self.data.vertices, &self.data.faces)
     }
 }
 
@@ -250,6 +328,12 @@ impl Polyhedron<VtFcNm> {
     }
 }
 
+impl VertexAndFaceOps for Polyhedron<VtFcNm> {
+    fn vertices_and_faces(&self) -> (&[Point3<f32>], &[Vec<usize>]) {
+        (&self.data.vertices, &self.data.faces)
+    }
+}
+
 impl Polyhedron<VtFcCt> {
     /// Strip out the centroid information.
     pub fn downgrade(self) -> Polyhedron<VtFc> {
@@ -260,6 +344,12 @@ impl Polyhedron<VtFcCt> {
                 faces: self.data.faces,
             }
         }
+    }
+}
+
+impl VertexAndFaceOps for Polyhedron<VtFcCt> {
+    fn vertices_and_faces(&self) -> (&[Point3<f32>], &[Vec<usize>]) {
+        (&self.data.vertices, &self.data.faces)
     }
 }
 
