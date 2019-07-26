@@ -6,6 +6,8 @@
 use cgmath::{Point3, Vector3, BaseFloat};
 use cgmath::prelude::InnerSpace;
 
+pub mod plane;
+
 /// Produce the golden ratio of 1.6180339887...
 ///
 /// 1 + √5
@@ -66,13 +68,13 @@ pub fn sum_three_points<S: BaseFloat>(
 ///
 /// Using [this formula](http://paulbourke.net/geometry/polygonmesh/). You need to scroll
 /// down most of the page. It's 'Centroid of a 3D shell described by 3 vertex facets'.
-pub fn convex_planar_polygon_centroid(vertices: &[Point3<f32>]) -> Point3<f32> {
+pub fn convex_planar_polygon_centroid(vertices: &[Point3<f64>]) -> Point3<f64> {
     // Break into triangles by rotating on a starting axis. This works because it's
     // assumed to be a convex polygon.
     let p1 = vertices[0];
 
     let mut summed_area = 0.0;
-    let mut summed_point_area: Point3<f32> = Point3::new(0.0, 0.0, 0.0);
+    let mut summed_point_area: Point3<f64> = Point3::new(0.0, 0.0, 0.0);
     
     for i in 1..(vertices.len() - 1) {
         let p2 = vertices[i];
@@ -96,10 +98,10 @@ pub fn convex_planar_polygon_centroid(vertices: &[Point3<f32>]) -> Point3<f32> {
 /// rising from the sand. This is technically wrong but when used for the Conway Dual
 /// operation it ensures that the polyhedron doesn't shrink. Conway Operators after all
 /// only specify operations on 'topology', not how the shape is geometrically calculated.
-pub fn polyhedron_face_center(vertices: &[Point3<f32>]) -> Point3<f32> {
-    let summed: Point3<f32> = vertices
+pub fn polyhedron_face_center(vertices: &[Point3<f64>]) -> Point3<f64> {
+    let summed: Point3<f64> = vertices
         .iter()
-        .fold(Point3::new(0.0, 0.0, 0.0), |mut s, p| -> Point3<f32> {
+        .fold(Point3::new(0.0, 0.0, 0.0), |mut s, p| -> Point3<f64> {
             s.x += p.x;
             s.y += p.y;
             s.z += p.z;
@@ -107,7 +109,7 @@ pub fn polyhedron_face_center(vertices: &[Point3<f32>]) -> Point3<f32> {
             s
         });
 
-    summed / (vertices.len() as f32)
+    summed / (vertices.len() as f64)
 }
 
 #[cfg(test)]
@@ -116,13 +118,13 @@ mod test {
 
     #[test]
     fn normal_makes_sense() {
-        let p1 = Point3::new(0f32, 0f32, 0f32);
-        let p2 = Point3::new(2f32, 0f32, 0f32);
-        let p3 = Point3::new(0f32, 2f32, 0f32);
+        let p1 = Point3::new(0f64, 0f64, 0f64);
+        let p2 = Point3::new(2f64, 0f64, 0f64);
+        let p3 = Point3::new(0f64, 2f64, 0f64);
 
         let n = triangle_normal(p1, p2, p3);
 
-        assert!(n == Vector3::new(0f32, 0f32, 1f32));
+        assert!(n == Vector3::new(0f64, 0f64, 1f64));
     }
 
     #[test]

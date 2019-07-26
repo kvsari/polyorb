@@ -19,7 +19,7 @@ impl SingleColour {
     }
 
     pub fn to_cached(&self) -> scene::Cached {
-        let faces: Vec<planar::Polygon<f32>> = self.polyhedron
+        let faces: Vec<planar::Polygon<f64>> = self.polyhedron
             .faces()
             .collect();
 

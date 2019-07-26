@@ -82,10 +82,10 @@ pub (in crate::platonic_solid) fn cube(
     (vertexes, indexes)
 }
 
-pub (in crate::platonic_solid) fn cube2(len: f32) -> Polyhedron<VtFc> {
+pub (in crate::platonic_solid) fn cube2(len: f64) -> Polyhedron<VtFc> {
     // The cube center is at (0, 0, 0) of its local space.
     let cc = Point3::new(0.0, 0.0, 0.0);
-    let cl = len / 2f32;
+    let cl = len / 2f64;
     
     // Get the cube first. p/n means positive of negative `cl` on the x,y and z.    
     let c_ppp = Point3::new(cl, cl, cl);
@@ -97,7 +97,7 @@ pub (in crate::platonic_solid) fn cube2(len: f32) -> Polyhedron<VtFc> {
     let c_nnn = Point3::new(cl.neg(), cl.neg(), cl.neg());
     let c_pnn = Point3::new(cl, cl.neg(), cl.neg());
 
-    let vertices: [Point3<f32>; 8] = [
+    let vertices: [Point3<f64>; 8] = [
         c_ppp, c_npp, c_nnp, c_pnp, c_ppn, c_npn, c_nnn, c_pnn,
     ];
 

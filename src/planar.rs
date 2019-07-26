@@ -20,16 +20,16 @@ use crate::scene;
 /// fractional numbers or rework the definition to be a 2D polygon with a 3D normal and a
 /// 3D translation.
 #[derive(Debug, Clone)]
-pub struct Polygon<F32> {
-    vertices: Vec<Point3<F32>>,
-    normal: Vector3<F32>,
+pub struct Polygon<F64> {
+    vertices: Vec<Point3<F64>>,
+    normal: Vector3<F64>,
 }
 
-impl Polygon<f32> {
+impl Polygon<f64> {
     /// Don't expose it publicly outside the crate otherwise an incorrect planar `Polygon`
     /// could be constructed. This method will not check for a minimum of 3 vertices nor
     /// planarity if there are more than 3 vertices.
-    pub (in crate) fn new(vertices: &[Point3<f32>], normal: Vector3<f32>) -> Self {
+    pub (in crate) fn new(vertices: &[Point3<f64>], normal: Vector3<f64>) -> Self {
         Polygon {
             vertices: vertices.to_owned(),
             normal,
@@ -48,13 +48,13 @@ impl Polygon<f32> {
             indexes.push((index + offset) as u16);
             indexes.push((index + 1 + offset) as u16);
         }
-
+        
         let vertices = self.vertices
             .iter()
             .map(|v| (v.clone(), self.normal.clone()))
             .map(|(v, n)| scene::Vertex::new(
-                [v.x, v.y, v.z],
-                [n.x, n.y, n.z],
+                [v.x as f32, v.y as f32, v.z as f32],
+                [n.x as f32, n.y as f32, n.z as f32],
                 colour,
             ))
             .collect();

@@ -72,11 +72,11 @@ macro_rules! platonic2 {
     ($name:ident, $function:expr, $seed_solid:expr) => {
         #[derive(Debug, Copy, Clone)]
         pub struct $name {
-            side_len: f32,
+            side_len: f64,
         }
 
         impl $name {
-            pub fn new(side_len: f32) -> Self {
+            pub fn new(side_len: f64) -> Self {
                 $name { side_len }
             }
 

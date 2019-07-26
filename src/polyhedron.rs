@@ -159,7 +159,7 @@ impl ConwayDescription {
 }
 
 pub trait VertexAndFaceOps {
-    fn vertices_and_faces(&self) -> (&[Point3<f32>], &[Vec<usize>]);
+    fn vertices_and_faces(&self) -> (&[Point3<f64>], &[Vec<usize>]);
 
     /// Return the index for each vertex attached with the indexes for each face a
     /// vertex is part of.
@@ -192,27 +192,27 @@ pub trait VertexAndFaceOps {
 /// All faces are guaranteed to have three or more vertices.
 #[derive(Debug, Clone)]
 pub struct VtFc {
-    center: Point3<f32>,
-    vertices: Vec<Point3<f32>>,
+    center: Point3<f64>,
+    vertices: Vec<Point3<f64>>,
     faces: Vec<Vec<usize>>,
 }
 
 /// Add the centroid for each face.
 #[derive(Debug, Clone)]
 pub struct VtFcCt {
-    center: Point3<f32>,
-    vertices: Vec<Point3<f32>>,
+    center: Point3<f64>,
+    vertices: Vec<Point3<f64>>,
     faces: Vec<Vec<usize>>,
-    centroids: Vec<Point3<f32>>,
+    centroids: Vec<Point3<f64>>,
 }
 
 /// Add the normals. Vector of normals and faces are parallel.
 #[derive(Debug, Clone)]
 pub struct VtFcNm {
-    center: Point3<f32>,
-    vertices: Vec<Point3<f32>>,
+    center: Point3<f64>,
+    vertices: Vec<Point3<f64>>,
     faces: Vec<Vec<usize>>,
-    normals: Vec<Vector3<f32>>,
+    normals: Vec<Vector3<f64>>,
 }
 
 /// The faces, vertices and edges that make up a polyhedron.
@@ -223,7 +223,7 @@ pub struct Polyhedron<T> {
 
 impl Polyhedron<VtFc> {
     pub fn new(
-        center: Point3<f32>, vertices: &[Point3<f32>], faces: &[&[usize]],
+        center: Point3<f64>, vertices: &[Point3<f64>], faces: &[&[usize]],
     ) -> Self {
         Polyhedron {
             data: VtFc {
@@ -240,7 +240,7 @@ impl Polyhedron<VtFc> {
     /// Calculate the normal for each face and emit a `Polyhedron` with that information
     /// saved consuming self.
     pub fn normalize(self) -> Polyhedron<VtFcNm> {
-        let normals: Vec<Vector3<f32>> = self.data.faces
+        let normals: Vec<Vector3<f64>> = self.data.faces
             .iter()
             .map(|v| geop::triangle_normal(
                 self.data.vertices[v[0]],
@@ -262,12 +262,12 @@ impl Polyhedron<VtFc> {
     /// Calculate the centroid for each face and emit a `Polyhedron` with that information
     /// saved consuming self.
     pub fn centroidize(self) -> Polyhedron<VtFcCt> {
-        let centroids: Vec<Point3<f32>> = self.data.faces
+        let centroids: Vec<Point3<f64>> = self.data.faces
             .iter()
             .map(|v| v
                  .iter()
                  .map(|i| self.data.vertices[*i])
-                 .collect::<Vec<Point3<f32>>>()
+                 .collect::<Vec<Point3<f64>>>()
             )
             .map(|v| geop::convex_planar_polygon_centroid(&v))
             .collect();
@@ -286,12 +286,12 @@ impl Polyhedron<VtFc> {
     /// rise out of the planar polygon faces. This is to prevent the polyhedron from
     /// shrinking.
     pub fn rising_centroidize(self) -> Polyhedron<VtFcCt> {
-        let f_centroids: Vec<Point3<f32>> = self.data.faces
+        let f_centroids: Vec<Point3<f64>> = self.data.faces
             .iter()
             .map(|v| v
                  .iter()
                  .map(|i| self.data.vertices[*i])
-                 .collect::<Vec<Point3<f32>>>()
+                 .collect::<Vec<Point3<f64>>>()
             )
             .map(|v| geop::polyhedron_face_center(&v))
             .collect();
@@ -308,20 +308,20 @@ impl Polyhedron<VtFc> {
 }
 
 impl VertexAndFaceOps for Polyhedron<VtFc> {
-    fn vertices_and_faces(&self) -> (&[Point3<f32>], &[Vec<usize>]) {
+    fn vertices_and_faces(&self) -> (&[Point3<f64>], &[Vec<usize>]) {
         (&self.data.vertices, &self.data.faces)
     }
 }
 
 impl Polyhedron<VtFcNm> {
-    pub fn faces(&self) -> impl Iterator<Item = planar::Polygon<f32>> + '_ {
+    pub fn faces(&self) -> impl Iterator<Item = planar::Polygon<f64>> + '_ {
         self.data.faces
             .iter()
             .map(move |vertex_indexes| {
                 vertex_indexes
                     .iter()
                     .map(move |i| self.data.vertices[*i].clone())
-                    .collect::<Vec<Point3<f32>>>()
+                    .collect::<Vec<Point3<f64>>>()
             })
             .enumerate()
             .map(move |(i, v)| planar::Polygon::new(&v, self.data.normals[i].clone()))
@@ -329,7 +329,7 @@ impl Polyhedron<VtFcNm> {
 }
 
 impl VertexAndFaceOps for Polyhedron<VtFcNm> {
-    fn vertices_and_faces(&self) -> (&[Point3<f32>], &[Vec<usize>]) {
+    fn vertices_and_faces(&self) -> (&[Point3<f64>], &[Vec<usize>]) {
         (&self.data.vertices, &self.data.faces)
     }
 }
@@ -348,7 +348,7 @@ impl Polyhedron<VtFcCt> {
 }
 
 impl VertexAndFaceOps for Polyhedron<VtFcCt> {
-    fn vertices_and_faces(&self) -> (&[Point3<f32>], &[Vec<usize>]) {
+    fn vertices_and_faces(&self) -> (&[Point3<f64>], &[Vec<usize>]) {
         (&self.data.vertices, &self.data.faces)
     }
 }
