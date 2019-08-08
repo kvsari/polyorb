@@ -95,21 +95,29 @@ impl Specification {
                     let vertex_face_members = p.faces_per_vertex();
 
                     // FOR EACH `vertex_face_members`
+                    for (v_index, f_indices) in vertex_face_members {
+                        // Use the face indices to lookup the centroids.
+                        // These define a new face.
+                        let nfv: Vec<Point3<f64>> = f_indices
+                            .iter()
+                            .map(|i| p.data.centroids[*i].clone())
+                            .collect();
 
-                    // Use the face indices to lookup the centroids
+                        // Make a copy of the vertex and make a vector copy of it.
+                        let vertex = p.data.vertices[v_index].clone();
+                        let vector = vertex.to_homogeneous().truncate();
 
-                    // Use the centroids to define a new face
+                        // We use the `vertex` and `vector` to define the plane for the
+                        // new face defined from the centroids.
+                        geop::Plane::new(vector, vertex);
 
-                    // Make a copy of the vertex, vectorize and normalize it.
+                        // Get the intersection of the vertex as a vector with the plane.
+                        // The intersection point is our centroid of the new face.
 
-                    // Calculate the plane of that face using a point and the normal.
+                        // Sort the vertices of the new face in clockwize direction using
+                        // then new normal and the new centroid.
 
-                    // Calculate the intersection of the vertex as a vector with the plane
-
-                    // The intersection point is our centroid of the new face
-
-                    // Sort the vertices of the new face in clockwize direction using
-                    // then new normal and the new centroid.
+                    }
 
                     p.downgrade()
                 },

@@ -4,9 +4,12 @@
 //use std::ops;
 
 use cgmath::{Point3, Vector3, BaseFloat};
-use cgmath::prelude::InnerSpace;
+use cgmath::prelude::*;
 
-pub mod plane;
+mod plane;
+//mod line;
+
+pub use self::plane::Plane;
 
 /// Produce the golden ratio of 1.6180339887...
 ///
