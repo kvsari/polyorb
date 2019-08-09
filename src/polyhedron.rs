@@ -6,6 +6,7 @@
 use std::{fmt, error};
 
 use cgmath::{Point3, Vector3};
+use cgmath::prelude::*;
 
 use crate::geop;
 use crate::planar;
@@ -103,16 +104,29 @@ impl Specification {
                             .map(|i| p.data.centroids[*i].clone())
                             .collect();
 
-                        // Make a copy of the vertex and make a vector copy of it.
+                        // The normal of our new face plane is the vertex.
                         let vertex = p.data.vertices[v_index].clone();
-                        let vector = vertex.to_homogeneous().truncate();
+                        let vector = vertex
+                            .clone()
+                            .to_homogeneous()
+                            .truncate();
+                        let normal = vector
+                            .clone()
+                            .normalize();
 
-                        // We use the `vertex` and `vector` to define the plane for the
+                        // To finish our plane definition, we use one of the calculated
+                        // centroids as the point on the plane.
+                        let point = nfv[0].clone();
+
+                        // We use the `point` and `normal` to define the plane for the
                         // new face defined from the centroids.
-                        geop::Plane::new(vector, vertex);
+                        let plane = geop::Plane::new(normal, point);
 
-                        // Get the intersection of the vertex as a vector with the plane.
-                        // The intersection point is our centroid of the new face.
+                        // Get the intersection of the vertex as a line from origin with
+                        // the plane. Intersection point is our centroid of the new face.
+                        let centroid = plane
+                            .line_intersection(vector, vertex)
+                            .expect("Polyhedron is internally inconsistent");
 
                         // Sort the vertices of the new face in clockwize direction using
                         // then new normal and the new centroid.
@@ -121,7 +135,7 @@ impl Specification {
 
                     p.downgrade()
                 },
-                _ => panic!("Second seed snuck in."),
+                _ => panic!("Second seed somehow snuck in."),
             })
     }
 }

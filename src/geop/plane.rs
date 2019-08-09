@@ -54,13 +54,40 @@ pub struct Plane<S: BaseFloat> {
 }
 
 impl<S: BaseFloat> Plane<S> {
+    /// Expects the normal to be normalized.
     pub fn new(normal: Vector3<S>, point: Point3<S>) -> Self {
-        let normal = normal.normalize();
+        //let normal = normal.normalize();
 
         Plane { normal, point }
     }
-    
-    //pub fn line_intersection(p1: Point3<S>, p2: Point3<S>) -> Option<Point3<S>> {
-        
-    //}
+
+    /// [Algebraic form](https://en.wikipedia.org/wiki/Line%E2%80%93plane_intersection)
+    pub fn line_intersection(
+        self, vector: Vector3<S>, point: Point3<S>
+    ) -> Option<Point3<S>> {
+        // Check if the line and plane are parallel. Line Plane Dot Product `lpdp`.
+        let lpdp = vector.dot(self.normal);
+        if lpdp == S::zero() {
+            return None;
+        }
+
+        // Check if the line and plane are parallel and the line is contained within
+        // the plane. Point, Linepoint Dot Product `pldp`.
+        let intermediate = Point3::new(
+            self.point.x - point.x, self.point.y - point.y, self.point.z - point.z
+        )
+            .to_homogeneous()
+            .truncate();        
+        let pldp = intermediate.dot(self.normal);
+        if pldp == S::zero() {
+            return None;
+        }
+
+        // Calculate the scalar 'd' value.
+        let d = pldp / lpdp;
+
+        // Now we get our intersection point
+        let s = vector * d;
+        Some(Point3::new(s.x + point.x, s.y + point.y, s.z + point.z))
+    }
 }
