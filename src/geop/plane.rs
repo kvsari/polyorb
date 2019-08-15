@@ -1,7 +1,5 @@
 //! # Plane stuff
 
-use std::ops::Neg;
-
 use derive_getters::Getters;
 use cgmath::{Point3, Vector3, BaseFloat};
 use cgmath::prelude::*;
@@ -63,7 +61,7 @@ impl<S: BaseFloat> Plane<S> {
 
     /// [Algebraic form](https://en.wikipedia.org/wiki/Line%E2%80%93plane_intersection)
     pub fn line_intersection(
-        self, vector: Vector3<S>, point: Point3<S>
+        &self, vector: Vector3<S>, point: Point3<S>
     ) -> Option<Point3<S>> {
         // Check if the line and plane are parallel. Line Plane Dot Product `lpdp`.
         let lpdp = vector.dot(self.normal);

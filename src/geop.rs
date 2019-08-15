@@ -2,7 +2,9 @@
 //!
 //! Common geomtery data types and operations that are used in polyhedron generation.
 //use std::ops;
+use std::cmp::Ordering;
 
+use derive_getters::Getters;
 use cgmath::{Point3, Vector3, BaseFloat};
 use cgmath::prelude::*;
 
@@ -96,10 +98,7 @@ pub fn convex_planar_polygon_centroid(vertices: &[Point3<f64>]) -> Point3<f64> {
     summed_point_area / summed_area
 }
 
-/// A cheap and 'innacurate' form of calculating a centroid. By not taking the area into
-/// question, the center moves 'out' of the planar polygon like the point of a pyramid
-/// rising from the sand. This is technically wrong but when used for the Conway Dual
-/// operation it ensures that the polyhedron doesn't shrink. Conway Operators after all
+/// A cheap and 'innacurate' form of calculating a centroid. Conway Operators after all
 /// only specify operations on 'topology', not how the shape is geometrically calculated.
 pub fn polyhedron_face_center(vertices: &[Point3<f64>]) -> Point3<f64> {
     let summed: Point3<f64> = vertices
@@ -113,6 +112,38 @@ pub fn polyhedron_face_center(vertices: &[Point3<f64>]) -> Point3<f64> {
         });
 
     summed / (vertices.len() as f64)
+}
+
+#[derive(Debug, Clone, Getters)]
+pub struct Clockwise<S: BaseFloat> {
+    center: Point3<S>,
+    normal: Vector3<S>,
+}
+
+/// `check` whether that point is clockwise or anti-clockwise `relative` to this point
+/// supplied using the the `center` of the clock and the `normal` to indicate
+/// the direction of the plane. Returns `GreaterThan` if so, otherwise `LessThan`.
+pub fn clockwise<S: BaseFloat>(
+    relative: &Point3<S>, check: &Point3<S>, center: &Point3<S>, normal: &Vector3<S>
+) -> Ordering {
+    if relative == check {
+        return Ordering::Equal;
+    }
+        
+    let rc = relative - center;    
+    let cc = check - center;
+    
+    let ordering = rc
+        .cross(cc)
+        .dot(normal.clone());
+
+    if ordering > S::zero() {
+        Ordering::Greater
+    } else if ordering < S::zero() {
+        Ordering::Less
+    } else {
+        Ordering::Equal
+    }
 }
 
 #[cfg(test)]

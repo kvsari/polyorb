@@ -92,48 +92,64 @@ impl Specification {
             .skip(1)
             .fold(seed, |p, op| match op {
                 ConwayOperation::Dual => {
-                    let p = p.rising_centroidize();
+                    //let p = p.rising_centroidize();
+                    let p = p.centroidize();
                     let vertex_face_members = p.faces_per_vertex();
 
-                    // FOR EACH `vertex_face_members`
-                    for (v_index, f_indices) in vertex_face_members {
-                        // Use the face indices to lookup the centroids.
-                        // These define a new face.
-                        let nfv: Vec<Point3<f64>> = f_indices
-                            .iter()
-                            .map(|i| p.data.centroids[*i].clone())
-                            .collect();
+                    // debug
+                    let mut count = 0;
 
-                        // The normal of our new face plane is the vertex.
-                        let vertex = p.data.vertices[v_index].clone();
-                        let vector = vertex
-                            .clone()
-                            .to_homogeneous()
-                            .truncate();
-                        let normal = vector
-                            .clone()
-                            .normalize();
+                    let np_faces: Vec<Vec<usize>> = vertex_face_members
+                        .into_iter()
+                        .fold(Vec::new(), |mut faces, (v_index, f_indices)| {
+                            // The normal of our new face plane is the vertex.
+                            let vertex = p.data.vertices[v_index].clone();
+                            let vector = vertex
+                                .clone()
+                                .to_homogeneous()
+                                .truncate();
+                            let normal = vector
+                                .clone()
+                                .normalize();
 
-                        // To finish our plane definition, we use one of the calculated
-                        // centroids as the point on the plane.
-                        let point = nfv[0].clone();
+                            // To finish our plane definition, we use one of the calculated
+                            // centroids as the point on the plane
+                            let point = p.data.centroids[f_indices[0]].clone();
+                            
+                            // We use the `point` and `normal` to define the plane for the
+                            // new face defined from the centroids.
+                            let plane = geop::Plane::new(normal, point);
+                            
+                            // Get the intersection of the vertex as a line from origin with
+                            // the plane. Intersection point is centroid of the new face.
+                            let centroid = plane
+                                .line_intersection(vector, vertex)
+                                .expect("Polyhedron is internally inconsistent");
 
-                        // We use the `point` and `normal` to define the plane for the
-                        // new face defined from the centroids.
-                        let plane = geop::Plane::new(normal, point);
+                            // Sort the vertices of the new face clockwize using
+                            // the new normal and the new centroid.
+                            let mut ordered: Vec<usize> = f_indices.clone();
+                            ordered.sort_by(|fi1, fi2| geop::clockwise(
+                                &p.data.centroids[*fi1],
+                                &p.data.centroids[*fi2],
+                                &centroid,
+                                plane.normal(),
+                            ));
 
-                        // Get the intersection of the vertex as a line from origin with
-                        // the plane. Intersection point is our centroid of the new face.
-                        let centroid = plane
-                            .line_intersection(vector, vertex)
-                            .expect("Polyhedron is internally inconsistent");
+                            // debug
+                            count += 1;
 
-                        // Sort the vertices of the new face in clockwize direction using
-                        // then new normal and the new centroid.
+                            faces.push(ordered);
+                            faces
+                        });
 
+                    Polyhedron {
+                        data: VtFc {
+                            center: p.data.center,
+                            vertices: p.data.centroids,
+                            faces: np_faces,
+                        },
                     }
-
-                    p.downgrade()
                 },
                 _ => panic!("Second seed somehow snuck in."),
             })
@@ -162,7 +178,7 @@ impl ConwayDescription {
         }
     }
 
-    pub fn dual(&mut self) -> Result<&mut Self, OpError> {
+    pub fn dual(mut self) -> Result<Self, OpError> {
         if self.operations.is_empty() {
             Err(OpError::NoSeedSet)
         } else {
@@ -194,11 +210,13 @@ pub trait VertexAndFaceOps {
             .map(|(i, _p)| {
                 let f_v: Vec<usize> = faces
                     .iter()
-                    .fold(Vec::new(), |mut v, face_indices| -> Vec<usize> {
+                    .enumerate()
+                    .fold(Vec::new(), |mut v, (face_index, face_indices)| -> Vec<usize> {
                         v.extend(
                             face_indices
                                 .iter()
                                 .filter(|x| **x == i)
+                                .map(|_| face_index)
                         );
 
                         v
