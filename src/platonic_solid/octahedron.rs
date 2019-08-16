@@ -3,6 +3,7 @@ use std::ops::Neg;
 
 use cgmath::Point3;
 
+use crate::polyhedron::{Polyhedron, VtFc};
 use crate::geop::triangle_normal;
 use super::Vertex;
 
@@ -90,4 +91,39 @@ pub (in crate::platonic_solid) fn octahedron(
     ];
 
     (vertexes, indexes)
+}
+
+pub (in crate::platonic_solid) fn octahedron2(len: f64) -> Polyhedron<VtFc> {
+    let cc = Point3::new(0.0, 0.0, 0.0);
+
+    // We want to build the anchor square in the center (0, 0, 0) over X, Y.
+    let h_len = len / 2f64;
+
+    // We spell out the formula instead of using `h_len` to avoid confusion.
+    let circumscribed_sphere_radius = (len / 2f64) * 2f64.sqrt();
+
+    // Build our square.
+    let p_top_left  = Point3::new(h_len.neg(), h_len, 0f64);
+    let p_top_right = Point3::new(h_len, h_len, 0f64);
+    let p_bot_left  = Point3::new(h_len.neg(), h_len.neg(), 0f64);
+    let p_bot_right = Point3::new(h_len, h_len.neg(), 0f64);
+
+    // Get the Z points using the sphere radius
+    let p_far  = Point3::new(0f64, 0f64, circumscribed_sphere_radius.neg());
+    let p_near = Point3::new(0f64, 0f64, circumscribed_sphere_radius);
+
+    let vertices: [Point3<f64>; 6] = [
+        p_top_left, p_top_right, p_bot_left, p_bot_right, p_far, p_near,
+    ];
+
+    let t1 = [0, 1, 4];
+    let t2 = [2, 0, 4];
+    let t3 = [3, 2, 4];
+    let t4 = [1, 3, 4];
+    let t5 = [1, 0, 5];
+    let t6 = [0, 2, 5];
+    let t7 = [2, 3, 5];
+    let t8 = [3, 1, 5];
+
+    Polyhedron::new(cc, &vertices, &[&t1, &t2, &t3, &t4, &t5, &t6, &t7, &t8])
 }

@@ -31,12 +31,23 @@ pub fn main() -> Result<(), Box<dyn std::error::Error>> {
         45.0,
         1.0..20.0,
     );
-    
+
     let conway = polyhedron::ConwayDescription::new()
-    //.seed(&platonic_solid::Cube2::new(1.0))?
+        .seed(&platonic_solid::Cube2::new(1.0))?;
+    //.dual()?;
+
+
+    /*
+    let conway = polyhedron::ConwayDescription::new()
         .seed(&platonic_solid::Tetrahedron2::new(1.0))?;
         //.dual()?;
+     */
+
+    /*
+    let conway = polyhedron::ConwayDescription::new()
+        .seed(&platonic_solid::Octahedron2::new(1.0))?;
         //.dual()?;
+    */
 
     let spec = conway.emit()?;
     println!("Conway notation for polyhedron: {}", spec.notation());
