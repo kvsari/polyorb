@@ -3,6 +3,7 @@ use std::ops::Neg;
 
 use cgmath::Point3;
 
+use crate::polyhedron::{Polyhedron, VtFc};
 use crate::geop::triangle_normal;
 use super::Vertex;
 
@@ -70,4 +71,43 @@ pub (in crate::platonic_solid) fn tetrahedron(
     ];
 
     (vertices, index)
+}
+
+pub (in crate::platonic_solid) fn tetrahedron2(len: f64) -> Polyhedron<VtFc> {    
+    let cc = Point3::new(0.0, 0.0, 0.0);
+    
+    // Setup out starting values
+    let plot_x = len / 2f64;  // We want the triangle centered on the Y coord.
+    let ra_x = plot_x;        // Right angle triangle X. Same length as the `plot_x`.
+    let ra_hypotenuse = len;  // Right angle triangle hypotenuse.
+
+    // Carry out reverse hypotenuse to get the triangle height.
+    let ra_x2 = ra_x.exp2();
+    let ra_hypotenuse2 = ra_hypotenuse.exp2();
+    let ra_height2 = ra_hypotenuse2 - ra_x2;
+    let ra_height = ra_height2.sqrt();
+
+    // Get our Y coordinates
+    let center = ra_height / 3f64;                // The center point is 1/3 of the height
+    let outer_radius = (ra_height * 2f64) / 3f64; // The outer radius is 2/3 of the height
+
+    // Our equilateral triangle
+    let left_point  = Point3::new(plot_x.neg(), center.neg(), center.neg());
+    let right_point = Point3::new(plot_x, center.neg(), center.neg());
+    let top_point   = Point3::new(0f64, outer_radius, center.neg());
+    let depth_point = Point3::new(0f64, 0f64, outer_radius);
+
+    let vertices: [Point3<f64>; 4] = [
+        right_point,
+        left_point,
+        top_point,
+        depth_point,
+    ];
+
+    let t1 = [0, 1, 2];
+    let t2 = [1, 3, 2];
+    let t3 = [1, 0, 3];
+    let t4 = [3, 0, 2];
+
+    Polyhedron::new(cc, &vertices, &[&t1, &t2, &t3, &t4])
 }

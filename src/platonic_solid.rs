@@ -97,4 +97,5 @@ macro_rules! platonic2 {
     }
 }
 
+platonic2!(Tetrahedron2, tetrahedron::tetrahedron2, SeedSolid::Tetrahedron);
 platonic2!(Cube2, cube::cube2, SeedSolid::Cube);

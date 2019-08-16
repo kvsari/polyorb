@@ -33,8 +33,9 @@ pub fn main() -> Result<(), Box<dyn std::error::Error>> {
     );
     
     let conway = polyhedron::ConwayDescription::new()
-        .seed(&platonic_solid::Cube2::new(1.0))?
-        .dual()?;
+    //.seed(&platonic_solid::Cube2::new(1.0))?
+        .seed(&platonic_solid::Tetrahedron2::new(1.0))?;
+        //.dual()?;
         //.dual()?;
 
     let spec = conway.emit()?;
