@@ -14,7 +14,7 @@ pub (in crate::platonic_solid) fn icosahedron(
 ) -> (Vec<Vertex<f32>>, Vec<u16>) {
 
     // Long side of the golden rectangle.
-    let g_len = len * golden_ratio();
+    let g_len = len * golden_ratio() as f32;
 
     // Now construct three orthogonal golden rectangles centered on (0, 0, 0).
     let g_mid = g_len / 2f32;

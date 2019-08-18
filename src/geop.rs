@@ -21,8 +21,8 @@ pub use self::plane::Plane;
 ///
 /// Why not just a constant? Why not constant function? Because rust hasn't yet made sqrt
 /// a const function. I don't know why. It's a maths function. It should be easy.
-pub fn golden_ratio() -> f32 {
-    (1.0 + 5f32.sqrt()) / 2.0
+pub fn golden_ratio() -> f64 {
+    (1.0 + 5f64.sqrt()) / 2.0
 }
 
 /// Compute plane normal described by the three points forming a triangle on said plane.
