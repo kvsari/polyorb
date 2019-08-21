@@ -52,6 +52,12 @@ pub fn main() -> Result<(), Box<dyn std::error::Error>> {
     let conway = polyhedron::ConwayDescription::new()
         .seed(&platonic_solid::Dodecahedron2::new(1.0))?
         //.dual()?;
+     */
+
+    /*
+    let conway = polyhedron::ConwayDescription::new()
+        .seed(&platonic_solid::Icosahedron2::new(1.0));
+        //.dual()?;
     */
 
     let spec = conway.emit()?;

@@ -101,3 +101,4 @@ platonic2!(Tetrahedron2, tetrahedron::tetrahedron2, SeedSolid::Tetrahedron);
 platonic2!(Cube2, cube::cube2, SeedSolid::Cube);
 platonic2!(Octahedron2, octahedron::octahedron2, SeedSolid::Octahedron);
 platonic2!(Dodecahedron2, dodecahedron::dodecahedron2, SeedSolid::Dodecahedron);
+platonic2!(Icosahedron2, icosahedron::icosahedron2, SeedSolid::Icosahedron);
