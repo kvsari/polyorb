@@ -2,6 +2,7 @@
 use std::ops::Neg;
 
 use cgmath::Point3;
+use cgmath::prelude::*;
 
 use crate::polyhedron::{Polyhedron, VtFc};
 use crate::geop::{triangle_normal, golden_ratio};
@@ -219,6 +220,14 @@ pub (in crate::platonic_solid) fn icosahedron2(len: f64) -> Polyhedron<VtFc> {
     let r_yz_br = Point3::new(0f64, g_mid, h_len.neg());
     let r_yz_bl = Point3::new(0f64, g_mid.neg(), h_len.neg());
 
+    // Get one of the points and as a vector, get the magnitude. This becomes the
+    // radius of the circumscribing sphere.
+    let radius = r_xy_tl
+        .clone()
+        .to_homogeneous()
+        .truncate()
+        .magnitude();
+
     let vertices: [Point3<f64>; 12] = [
         r_xy_tl, //  0
         r_xy_tr, //  1
@@ -257,6 +266,7 @@ pub (in crate::platonic_solid) fn icosahedron2(len: f64) -> Polyhedron<VtFc> {
 
     Polyhedron::new(
         cc,
+        radius,
         &vertices,
         &[
             &t1,

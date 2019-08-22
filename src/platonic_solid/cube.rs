@@ -2,6 +2,7 @@
 use std::ops::Neg;
 
 use cgmath::Point3;
+use cgmath::prelude::*;
 
 use crate::polyhedron::{Polyhedron, VtFc};
 use crate::geop::triangle_normal;
@@ -97,6 +98,14 @@ pub (in crate::platonic_solid) fn cube2(len: f64) -> Polyhedron<VtFc> {
     let c_nnn = Point3::new(cl.neg(), cl.neg(), cl.neg());
     let c_pnn = Point3::new(cl, cl.neg(), cl.neg());
 
+    // Get one of the points and as a vector, get the magnitude. This becomes the
+    // radius of the circumscribing sphere.
+    let radius = c_ppp
+        .clone()
+        .to_homogeneous()
+        .truncate()
+        .magnitude();
+
     let vertices: [Point3<f64>; 8] = [
         c_ppp, c_npp, c_nnp, c_pnp, c_ppn, c_npn, c_nnn, c_pnn,
     ];
@@ -108,5 +117,5 @@ pub (in crate::platonic_solid) fn cube2(len: f64) -> Polyhedron<VtFc> {
     let front  = [1, 0, 4, 5];
     let back   = [3, 2, 6, 7];
     
-    Polyhedron::new(cc, &vertices, &[&top, &bottom, &right, &left, &front, &back])
+    Polyhedron::new(cc, radius, &vertices, &[&top, &bottom, &right, &left, &front, &back])
 }

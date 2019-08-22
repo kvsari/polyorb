@@ -146,6 +146,7 @@ impl Specification {
                     Polyhedron {
                         data: VtFc {
                             center: p.data.center,
+                            radius: p.data.radius,
                             vertices: p.data.centroids,
                             faces: np_faces,
                         },
@@ -233,6 +234,7 @@ pub trait VertexAndFaceOps {
 #[derive(Debug, Clone)]
 pub struct VtFc {
     center: Point3<f64>,
+    radius: f64,
     vertices: Vec<Point3<f64>>,
     faces: Vec<Vec<usize>>,
 }
@@ -241,6 +243,7 @@ pub struct VtFc {
 #[derive(Debug, Clone)]
 pub struct VtFcCt {
     center: Point3<f64>,
+    radius: f64,
     vertices: Vec<Point3<f64>>,
     faces: Vec<Vec<usize>>,
     centroids: Vec<Point3<f64>>,
@@ -250,6 +253,7 @@ pub struct VtFcCt {
 #[derive(Debug, Clone)]
 pub struct VtFcNm {
     center: Point3<f64>,
+    radius: f64,
     vertices: Vec<Point3<f64>>,
     faces: Vec<Vec<usize>>,
     normals: Vec<Vector3<f64>>,
@@ -263,11 +267,12 @@ pub struct Polyhedron<T> {
 
 impl Polyhedron<VtFc> {
     pub fn new(
-        center: Point3<f64>, vertices: &[Point3<f64>], faces: &[&[usize]],
+        center: Point3<f64>, radius: f64, vertices: &[Point3<f64>], faces: &[&[usize]],
     ) -> Self {
         Polyhedron {
             data: VtFc {
                 center,
+                radius,
                 vertices: vertices.to_owned(),
                 faces: faces
                     .iter()
@@ -292,6 +297,7 @@ impl Polyhedron<VtFc> {
         Polyhedron {
             data: VtFcNm {
                 center: self.data.center,
+                radius: self.data.radius,
                 vertices: self.data.vertices,
                 faces: self.data.faces,
                 normals,
@@ -315,6 +321,7 @@ impl Polyhedron<VtFc> {
         Polyhedron {
             data: VtFcCt {
                 center: self.data.center,
+                radius: self.data.radius,
                 vertices: self.data.vertices,
                 faces: self.data.faces,
                 centroids: centroids,
@@ -339,6 +346,7 @@ impl Polyhedron<VtFc> {
         Polyhedron {
             data: VtFcCt {
                 center: self.data.center,
+                radius: self.data.radius,
                 vertices: self.data.vertices,
                 faces: self.data.faces,
                 centroids: f_centroids,
@@ -380,6 +388,7 @@ impl Polyhedron<VtFcCt> {
         Polyhedron {
             data: VtFc {
                 center: self.data.center,
+                radius: self.data.radius,
                 vertices: self.data.vertices,
                 faces: self.data.faces,
             }

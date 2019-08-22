@@ -2,6 +2,7 @@
 use std::ops::Neg;
 
 use cgmath::Point3;
+use cgmath::prelude::*;
 
 use crate::polyhedron::{Polyhedron, VtFc};
 use crate::geop::{triangle_normal, golden_ratio};
@@ -245,6 +246,14 @@ pub (in crate::platonic_solid) fn dodecahedron2(len: f64) -> Polyhedron<VtFc> {
     let r_yz_nn = Point3::new(0f64, l.neg(), s.neg());
     let r_yz_np = Point3::new(0f64, l.neg(), s);
 
+    // Get one of the points and as a vector, get the magnitude. This becomes the
+    // radius of the circumscribing sphere.
+    let radius = r_xy_pp
+        .clone()
+        .to_homogeneous()
+        .truncate()
+        .magnitude();
+
     let vertices: [Point3<f64>; 20] = [
         c_ppp,    //  0
         c_npp,    //  1
@@ -282,6 +291,9 @@ pub (in crate::platonic_solid) fn dodecahedron2(len: f64) -> Polyhedron<VtFc> {
     let p12 = [17, 5, 11, 1, 16];
 
     Polyhedron::new(
-        cc, &vertices, &[&p1, &p2, &p3, &p4, &p5, &p6, &p7, &p8, &p9, &p10, &p11, &p12]
+        cc,
+        radius,
+        &vertices,
+        &[&p1, &p2, &p3, &p4, &p5, &p6, &p7, &p8, &p9, &p10, &p11, &p12],
     )
 }
