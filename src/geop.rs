@@ -146,6 +146,32 @@ pub fn clockwise<S: BaseFloat>(
     }
 }
 
+/*
+/// Travel the line defined by the line equation of a point and direction. Return the point
+/// on the line when the travel has stopped.
+pub fn line_travel_destination<S: BaseFloat>(
+    point: &Point3<S>, direction: &Vector3<S>, travel: S,
+) -> Point3<S> {
+    let direction = direction.n
+    Point3::new(
+        point.x + travel * direction.x,
+        point.y + travel * direction.y,
+        point.z + travel * direction.z,
+    )
+}
+ */
+
+/// Lengthen a vector from (0, 0, 0) to `point` so that it's magnitude is `distance`.
+pub fn point_line_lengthen<S: BaseFloat>(point: &Point3<S>, distance: S) -> Point3<S> {
+    let magnified = point
+        .clone()
+        .to_homogeneous()
+        .truncate()
+        .normalize_to(distance);
+
+    Point3::new(magnified.x, magnified.y, magnified.z)
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
@@ -163,7 +189,20 @@ mod test {
 
     #[test]
     fn golden_ratio_golden() {
-        let g = 1.6180339887;
+        let g = 1.618033988749895;
         assert!(g == golden_ratio());
     }
+
+    /*
+    #[test]
+    fn travel_line() {
+        let point = Point3::new(0f64, 0f64, 0f64);
+        let direction = Vector3::new(2f64, 0f64, 0f64);
+        let travel = 1.5f64;
+
+        let destination = line_travel_destination(&point, &direction, travel);
+        dbg!(&destination);
+        assert!(destination == Point3::new(3f64, 0f64, 0f64));
+    }
+    */
 }

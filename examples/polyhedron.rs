@@ -33,8 +33,11 @@ pub fn main() -> Result<(), Box<dyn std::error::Error>> {
     );
 
     let conway = polyhedron::ConwayDescription::new()
-        .seed(&platonic_solid::Cube2::new(1.0))?;
-    //.dual()?;
+        .seed(&platonic_solid::Cube2::new(1.0))?
+        .dual()?
+        .dual()?
+        .dual()?
+        .dual()?;
 
     /*
     let conway = polyhedron::ConwayDescription::new()

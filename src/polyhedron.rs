@@ -1,8 +1,11 @@
-//! Polyhedron building
+//! Regular polyhedron building
 //!
 //! Polyhedron are build using [Conway Notation](https://en.wikipedia.org/wiki/Conway_polyhedron_notation). A seed value is starts
 //! the polydron with various modifiers being chained on. A seed shape is usually a
 //! [platonic solid](https://en.wikipedia.org/wiki/Platonic_solid).
+//!
+//! Since all polyhedron are assumed to be regular, a circumscribing sphere is given by the
+//! radius. 
 use std::{fmt, error};
 
 use cgmath::{Point3, Vector3};
@@ -143,11 +146,20 @@ impl Specification {
                             faces
                         });
 
+                    // We lengthen the lines from origin to each centroid so that the
+                    // vertex is touching the circumscribing sphere. We do this by just
+                    // adjusting the magnitude to equal the radius.
+                    let vertices = p.data.centroids
+                        .iter()
+                        .map(|point| geop::point_line_lengthen(point, p.data.radius))
+                        .collect();
+
                     Polyhedron {
                         data: VtFc {
                             center: p.data.center,
                             radius: p.data.radius,
-                            vertices: p.data.centroids,
+                            //vertices: p.data.centroids,
+                            vertices,
                             faces: np_faces,
                         },
                     }
