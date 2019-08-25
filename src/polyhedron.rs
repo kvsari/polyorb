@@ -137,7 +137,8 @@ impl Specification {
                                 &p.data.centroids[*fi2],
                                 &centroid,
                                 plane.normal(),
-                            ));
+                            ).reverse() // flip the ordering around. Somethings up...
+                            );
 
                             // debug
                             count += 1;

@@ -123,9 +123,20 @@ pub struct Clockwise<S: BaseFloat> {
 /// `check` whether that point is clockwise or anti-clockwise `relative` to this point
 /// supplied using the the `center` of the clock and the `normal` to indicate
 /// the direction of the plane. Returns `GreaterThan` if so, otherwise `LessThan`.
+///
+/// FIXME: This function may get things in reverse. Double check along with the coordinate
+///        system that it's not confusing clockwise and anti-clockwise. The current
+///        workaround is to just apply `.reverse()` to the return value.
 pub fn clockwise<S: BaseFloat>(
     relative: &Point3<S>, check: &Point3<S>, center: &Point3<S>, normal: &Vector3<S>
 ) -> Ordering {
+    /*
+    println!(
+        "Relative: {:?}, Check: {:?}, Center: {:?}, Normal: {:?}",
+        relative, check, center, normal,
+    );
+     */
+    
     if relative == check {
         return Ordering::Equal;
     }
@@ -191,6 +202,19 @@ mod test {
     fn golden_ratio_golden() {
         let g = 1.618033988749895;
         assert!(g == golden_ratio());
+    }
+
+    #[test]
+    fn clockwise_is() {
+        let center: Point3<f64> = Point3::new(0.0, 0.0, 0.0);
+        let relative: Point3<f64> = Point3::new(0.0, 1.0, 0.0);
+        let c_clock: Point3<f64> = Point3::new(0.2, 0.8, 0.0);
+        let c_anti: Point3<f64> = Point3::new(-0.2, 0.8, 0.0);
+        let normal: Vector3<f64> = Vector3::new(0.0, 0.0, -1.0); // suspect
+
+        assert!(Ordering::Equal == clockwise(&relative, &relative, &center, &normal));
+        assert!(Ordering::Greater == clockwise(&relative, &c_clock, &center, &normal));
+        assert!(Ordering::Less == clockwise(&relative, &c_anti, &center, &normal));
     }
 
     /*
