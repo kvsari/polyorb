@@ -2,7 +2,6 @@
 use std::ops::Neg;
 
 use cgmath::Point3;
-use cgmath::prelude::*;
 
 use crate::polyhedron::{Polyhedron, VtFc};
 use crate::geop::triangle_normal;
@@ -97,32 +96,22 @@ pub (in crate::platonic_solid) fn octahedron(
 pub (in crate::platonic_solid) fn octahedron2(len: f64) -> Polyhedron<VtFc> {
     let cc = Point3::new(0.0, 0.0, 0.0);
 
-    // We want to build the anchor square in the center (0, 0, 0) over X, Y.
-    let h_len = len / 2f64;
+    // Get the circumscribed sphere radius. This is our magnitude if all the vertices
+    // are to be vectors from origin.
+    let radius = 2f64.sqrt() /  2f64 * len;
 
-    // We spell out the formula instead of using `h_len` to avoid confusion.
-    let circumscribed_sphere_radius = (len / 2f64) * 2f64.sqrt();
+    // Build our square aligned on the coordinate axes.
+    let p_top   = Point3::new(0f64, radius, 0f64);
+    let p_right = Point3::new(radius, 0f64, 0f64);
+    let p_left  = Point3::new(radius.neg(), 0f64, 0f64);
+    let p_bot   = Point3::new(0f64, radius.neg(), 0f64);
 
-    // Build our square.
-    let p_top_left  = Point3::new(h_len.neg(), h_len, 0f64);
-    let p_top_right = Point3::new(h_len, h_len, 0f64);
-    let p_bot_left  = Point3::new(h_len.neg(), h_len.neg(), 0f64);
-    let p_bot_right = Point3::new(h_len, h_len.neg(), 0f64);
-
-    // Get the Z points using the sphere radius
-    let p_far  = Point3::new(0f64, 0f64, circumscribed_sphere_radius.neg());
-    let p_near = Point3::new(0f64, 0f64, circumscribed_sphere_radius);
-
-    // Get one of the points and as a vector, get the magnitude. This becomes the
-    // radius of the circumscribing sphere.
-    let radius = p_top_left
-        .clone()
-        .to_homogeneous()
-        .truncate()
-        .magnitude();
+    // Z points
+    let p_far  = Point3::new(0f64, 0f64, radius.neg());
+    let p_near = Point3::new(0f64, 0f64, radius);
 
     let vertices: [Point3<f64>; 6] = [
-        p_top_left, p_top_right, p_bot_left, p_bot_right, p_far, p_near,
+        p_top, p_right, p_left, p_bot, p_far, p_near,
     ];
 
     let t1 = [0, 1, 4];
