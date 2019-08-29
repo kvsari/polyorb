@@ -35,18 +35,20 @@ pub fn main() -> Result<(), Box<dyn std::error::Error>> {
     /*
     let conway = polyhedron::ConwayDescription::new()
         .seed(&platonic_solid::Cube2::new(1.0))?
-        .dual()?;
+        .kis()?;
+        //.dual()?;
     */
+
+    let conway = polyhedron::ConwayDescription::new()
+        .seed(&platonic_solid::Tetrahedron2::new(1.0))?;
+        //.kis()?;
+        //.dual()?;
 
     /*
     let conway = polyhedron::ConwayDescription::new()
-        .seed(&platonic_solid::Tetrahedron2::new(1.0))?;
+        .seed(&platonic_solid::Octahedron2::new(1.0))?
         //.dual()?;
-     */
-
-    let conway = polyhedron::ConwayDescription::new()
-        .seed(&platonic_solid::Octahedron2::new(1.0))?;
-        //.dual()?;
+    */
 
     /*
     let conway = polyhedron::ConwayDescription::new()
@@ -63,7 +65,7 @@ pub fn main() -> Result<(), Box<dyn std::error::Error>> {
     let spec = conway.emit()?;
     println!("Conway notation for polyhedron: {}", spec.notation());
     let polyhedron = spec.produce();
-    //dbg!(&polyhedron);
+    dbg!(&polyhedron);
     let present = presenter::SingleColour::new([0.0, 0.0, 1.0], polyhedron);
 
     let flat_shaders = shader::load_flat_shaders()?;

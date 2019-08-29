@@ -120,3 +120,8 @@ pub (in crate::platonic_solid) fn tetrahedron2(len: f64) -> Polyhedron<VtFc> {
 
     Polyhedron::new(cc, radius, &vertices, &[&t1, &t2, &t3, &t4])
 }
+
+/*
+pub (in crate::platonic_solid) fn tetrahedron3(len: f64) -> Polyhedron<VtFc> {
+}
+*/

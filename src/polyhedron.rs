@@ -7,6 +7,7 @@
 //! Since all polyhedron are assumed to be regular, a circumscribing sphere is given by the
 //! radius. 
 use std::{fmt, error};
+use std::iter::Extend;
 
 use cgmath::{Point3, Vector3};
 use cgmath::prelude::*;
@@ -44,10 +45,23 @@ pub trait Seed: objekt::Clone + fmt::Debug {
 
 objekt::clone_trait_object!(Seed);
 
+/// Conway operations which change the topology of a polyhedron. For more information see
+/// [here](https://en.wikipedia.org/wiki/Conway_polyhedron_notation). Only few of the
+/// operators are implmented. The ones necessary for constructing a [Goldberg Polyhedron](https://en.wikipedia.org/wiki/Goldberg_polyhedron)
+/// receive priority.
+///
+/// The actual polyhedron changes are carried out `Specification` which consumes a vector
+/// of these operations.
 #[derive(Debug, Clone)]
 enum ConwayOperation {
+    /// The starting polyhedron.
     Seed(SeedSolid, Polyhedron<VtFc>),
+
+    /// Replace each face with a vertex and each vertex is a face.
     Dual,
+
+    /// Raise a pyramid on each face.
+    Kis,
 }
 
 /// A polyhedron ready to be built. This struct is not to be modified.
@@ -69,6 +83,7 @@ impl Specification {
                 ops.push_str(match op {
                     ConwayOperation::Seed(ss, _) => ss.conway_notation(),
                     ConwayOperation::Dual => "d",
+                    ConwayOperation::Kis =>  "k",
                 });
                 
                 ops
@@ -95,12 +110,8 @@ impl Specification {
             .skip(1)
             .fold(seed, |p, op| match op {
                 ConwayOperation::Dual => {
-                    //let p = p.rising_centroidize();
                     let p = p.centroidize();
                     let vertex_face_members = p.faces_per_vertex();
-
-                    // debug
-                    let mut count = 0;
 
                     let np_faces: Vec<Vec<usize>> = vertex_face_members
                         .into_iter()
@@ -140,9 +151,6 @@ impl Specification {
                             ).reverse() // flip the ordering around. Somethings up...
                             );
 
-                            // debug
-                            count += 1;
-
                             faces.push(ordered);
                             faces
                         });
@@ -159,10 +167,60 @@ impl Specification {
                         data: VtFc {
                             center: p.data.center,
                             radius: p.data.radius,
-                            //vertices: p.data.centroids,
                             vertices,
                             faces: np_faces,
                         },
+                    }
+                },
+                ConwayOperation::Kis => {
+                    let mut k = p.centroidize();
+                    let offset = k.data.vertices.len();
+
+                    // The centroids form the tips of pyramids rising from each face. Thus
+                    // each face is subdivided into multiple triangle faces. To rise the
+                    // centroids we increase the magnitude to equal the radius of the
+                    // circumscribing sphere.
+                    let radius = k.data.radius;
+                    let pyramid_tips_iter = k.data.centroids
+                        .iter()
+                        .map(|point| geop::point_line_lengthen(point, radius));
+
+                    // We attach the pyramid_tips (centroids) to the vertices.
+                    //
+                    // TODO: Sort the vertices afterwards to put the pyramid_tips within
+                    //       their face locality as an extra step to prevent jumping
+                    //       through memory tempting cache misses.
+                    k.data.vertices.extend(pyramid_tips_iter);
+
+                    // Now we go through each face and split into triangles using the
+                    // centroid vertex at index(face_num + offset) in the vertices.
+                    let faces: Vec<Vec<usize>> = k.data.faces
+                        .into_iter()
+                        .enumerate()
+                        .fold(Vec::new(), |mut faces, (f_index, face)| {
+                            let pyramid_tip_index = f_index + offset;
+
+                            // Start the first face from the first and last indexes.
+                            faces.push(
+                                vec![*face.last().unwrap(), face[0], pyramid_tip_index]
+                            );
+
+                            // Get the rest of the new faces.
+                            face.windows(2)
+                                .for_each(|w| {
+                                    faces.push(vec![w[0], w[1], pyramid_tip_index])
+                                });
+                            
+                            faces
+                        });
+
+                    Polyhedron {
+                        data: VtFc {
+                            center: k.data.center,
+                            radius,
+                            vertices: k.data.vertices,
+                            faces,
+                        }
                     }
                 },
                 _ => panic!("Second seed somehow snuck in."),
@@ -197,6 +255,15 @@ impl ConwayDescription {
             Err(OpError::NoSeedSet)
         } else {
             self.operations.push(ConwayOperation::Dual);
+            Ok(self)
+        }
+    }
+
+    pub fn kis(mut self) -> Result<Self, OpError> {
+        if self.operations.is_empty() {
+            Err(OpError::NoSeedSet)
+        } else {
+            self.operations.push(ConwayOperation::Kis);
             Ok(self)
         }
     }
@@ -342,6 +409,7 @@ impl Polyhedron<VtFc> {
         }
     }
 
+    /*
     /// As above but using a 'flawed' centroid calculation which makes the center point
     /// rise out of the planar polygon faces. This is to prevent the polyhedron from
     /// shrinking.
@@ -366,6 +434,7 @@ impl Polyhedron<VtFc> {
             }
         }
     }
+    */
 }
 
 impl VertexAndFaceOps for Polyhedron<VtFc> {
