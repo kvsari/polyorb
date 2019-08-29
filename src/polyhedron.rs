@@ -60,7 +60,8 @@ enum ConwayOperation {
     /// Replace each face with a vertex and each vertex is a face.
     Dual,
 
-    /// Raise a pyramid on each face.
+    /// Raise a pyramid on each face. When doing this on a tetrahedron, it will make it
+    /// look like a cube. It is not. The topology is different.
     Kis,
 }
 

@@ -39,16 +39,17 @@ pub fn main() -> Result<(), Box<dyn std::error::Error>> {
         //.dual()?;
     */
 
-    let conway = polyhedron::ConwayDescription::new()
-        .seed(&platonic_solid::Tetrahedron2::new(1.0))?;
-        //.kis()?;
-        //.dual()?;
-
     /*
     let conway = polyhedron::ConwayDescription::new()
-        .seed(&platonic_solid::Octahedron2::new(1.0))?
-        //.dual()?;
+        .seed(&platonic_solid::Tetrahedron2::new(1.0))?
+        .kis()?
+        .dual()?;
     */
+
+    let conway = polyhedron::ConwayDescription::new()
+        .seed(&platonic_solid::Octahedron2::new(1.0))?
+        .kis()?;
+        //.dual()?;
 
     /*
     let conway = polyhedron::ConwayDescription::new()
