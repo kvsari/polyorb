@@ -1,7 +1,6 @@
 //! # Geometry Operations
 //!
 //! Common geomtery data types and operations that are used in polyhedron generation.
-//use std::ops;
 use std::cmp::Ordering;
 
 use derive_getters::Getters;
@@ -182,6 +181,8 @@ pub fn point_line_lengthen<S: BaseFloat>(point: &Point3<S>, distance: S) -> Poin
 
     Point3::new(magnified.x, magnified.y, magnified.z)
 }
+
+
 
 #[cfg(test)]
 mod test {

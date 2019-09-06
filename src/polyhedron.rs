@@ -8,6 +8,7 @@
 //! radius. 
 use std::{fmt, error};
 use std::iter::Extend;
+use std::collections::HashMap;
 
 use cgmath::{Point3, Vector3};
 use cgmath::prelude::*;
@@ -63,6 +64,9 @@ enum ConwayOperation {
     /// Raise a pyramid on each face. When doing this on a tetrahedron, it will make it
     /// look like a cube. It is not. The topology is different.
     Kis,
+
+    /// Specifically, uniform truncation.
+    Truncate,
 }
 
 /// A polyhedron ready to be built. This struct is not to be modified.
@@ -85,6 +89,7 @@ impl Specification {
                     ConwayOperation::Seed(ss, _) => ss.conway_notation(),
                     ConwayOperation::Dual => "d",
                     ConwayOperation::Kis =>  "k",
+                    ConwayOperation::Truncate => "t",
                 });
                 
                 ops
@@ -224,7 +229,100 @@ impl Specification {
                         }
                     }
                 },
-                _ => panic!("Second seed somehow snuck in."),
+                ConwayOperation::Truncate => {                    
+                    let vertex_face_members = p.faces_per_vertex();
+                    //                      v1         v2     f1     f2
+                    let mut lines: HashMap<usize, Vec<(usize, usize, usize)>> =
+                                           HashMap::new();
+
+                    for (v_i, faces) in vertex_face_members {
+                        // find shared lines
+                        for face in faces.iter() {
+                            // Scan through all the other faces. We test if they both
+                            // share another vertex apart from the current vertex.
+                            p.data.faces[*face]
+                                .iter()
+                                .filter(|i| **i != v_i) // skip the current vertex
+                                .for_each(|i| {
+                                    faces
+                                        .iter()
+                                        .filter(|f| *f != face) // skip the current face
+                                        .for_each(|f| {
+                                            p.data.faces[*f]
+                                                .iter()
+                                                .enumerate()
+                                                .filter(|(fi, _)| *fi != v_i)
+                                                .for_each(|(fi, _)| {
+                                                    if fi == *i {
+                                                        let edges = lines
+                                                            .entry(v_i)
+                                                            .or_insert(Vec::new());
+                                                        
+                                                        edges.push((*i, *face, fi));
+                                                    }
+                                                })
+                                        })
+                                });
+                        }
+                    }
+
+                    dbg!(&lines);
+                    
+                    let mut vertices = p.data.vertices.clone();
+                    let mut faces = p.data.faces.clone();
+                    p.data.vertices
+                        .iter()
+                        .enumerate()
+                        .for_each(|(i, vertex)| {
+                            //                      fi     nvi
+                            let mut update: HashMap<usize, Vec<usize>> = HashMap::new();
+                            let chop = 0.75f64;
+                            let edges = lines.get(&i).unwrap();
+                            for edge in edges {
+                                let v_2 = vertices[edge.0];
+                                let vector = vertex - v_2;                                
+                                let n_x = v_2.x + vector.x * chop;
+                                let n_y = v_2.y + vector.y * chop;
+                                let n_z = v_2.z + vector.z * chop;
+                                let new_point = Point3::new(n_x, n_y, n_z);
+
+                                let index = vertices.len();
+                                vertices.push(new_point);
+
+                                {
+                                    let fe = update
+                                        .entry(edge.1)
+                                        .or_insert(Vec::new());
+
+                                    fe.push(index);
+                                }
+
+                                {
+                                    let fe = update
+                                        .entry(edge.2)
+                                        .or_insert(Vec::new());
+
+                                    fe.push(index);
+                                }
+                            }
+
+                            for (f_i, nvi) in update {
+                                let fvis = &mut faces[f_i];
+                                fvis.retain(|vi| *vi != i);
+                                fvis.extend(nvi);
+                            }
+                        });
+
+                    Polyhedron {
+                        data: VtFc {
+                            center: p.data.center,
+                            radius: p.data.radius,
+                            vertices,
+                            faces,
+                        }
+                    }
+                },
+                ConwayOperation::Seed(_, _) => panic!("Second seed somehow snuck in."),
             })
     }
 }
@@ -269,6 +367,15 @@ impl ConwayDescription {
         }
     }
 
+    pub fn truncate(mut self) -> Result<Self, OpError> {
+        if self.operations.is_empty() {
+            Err(OpError::NoSeedSet)
+        } else {
+            self.operations.push(ConwayOperation::Truncate);
+            Ok(self)
+        }
+    }
+
     pub fn emit(&self) -> Result<Specification, OpError> {
         if self.operations.is_empty() {
             return Err(OpError::NoOperations);
@@ -307,7 +414,7 @@ pub trait VertexAndFaceOps {
                 (i, f_v)
             })
             .collect()
-    }
+    }    
 }
 
 /// Vertices and Faces. Inner state type for a `Polyhedron`. Not directly constructable.
@@ -409,33 +516,6 @@ impl Polyhedron<VtFc> {
             }
         }
     }
-
-    /*
-    /// As above but using a 'flawed' centroid calculation which makes the center point
-    /// rise out of the planar polygon faces. This is to prevent the polyhedron from
-    /// shrinking.
-    pub fn rising_centroidize(self) -> Polyhedron<VtFcCt> {
-        let f_centroids: Vec<Point3<f64>> = self.data.faces
-            .iter()
-            .map(|v| v
-                 .iter()
-                 .map(|i| self.data.vertices[*i])
-                 .collect::<Vec<Point3<f64>>>()
-            )
-            .map(|v| geop::polyhedron_face_center(&v))
-            .collect();
-
-        Polyhedron {
-            data: VtFcCt {
-                center: self.data.center,
-                radius: self.data.radius,
-                vertices: self.data.vertices,
-                faces: self.data.faces,
-                centroids: f_centroids,
-            }
-        }
-    }
-    */
 }
 
 impl VertexAndFaceOps for Polyhedron<VtFc> {

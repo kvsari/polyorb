@@ -3,10 +3,11 @@
 use derive_getters::Getters;
 use cgmath::{Point3, BaseFloat};
 
+/// Line stored as the line equation.
 #[derive(Debug, Clone, Getters)]
 pub struct Line<S: BaseFloat> {
-    point1: Point3<S>,
-    point2: Point3<S>,
+    point: Point3<S>,
+    vector: Vector3<S>,
 }
 
 impl<S: BaseFloat> Line<S> {

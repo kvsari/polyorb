@@ -31,6 +31,8 @@ impl Vertex {
 }
 
 /// Vertex data (triangles) and indexes and colours for slurping into video memory.
+///
+/// TODO: Need to sort the geometry faces from back to front relative to the viewpoint.
 pub trait Geometry {
     fn geometry(&self) -> (Vec<Vertex>, Vec<u16>);
 }
@@ -290,7 +292,7 @@ impl<T: Geometry> Scene<Prepare<T>> {
             },
             rasterization_state: wgpu::RasterizationStateDescriptor {
                 front_face: wgpu::FrontFace::Cw,
-                cull_mode: wgpu::CullMode::Back,
+                cull_mode: wgpu::CullMode::Front,
                 depth_bias: 2,
                 depth_bias_slope_scale: 2.0,
                 depth_bias_clamp: 0.0,

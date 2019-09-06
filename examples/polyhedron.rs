@@ -32,12 +32,11 @@ pub fn main() -> Result<(), Box<dyn std::error::Error>> {
         1.0..20.0,
     );
 
-    /*
     let conway = polyhedron::ConwayDescription::new()
         .seed(&platonic_solid::Cube2::new(1.0))?
-        .kis()?;
+        .truncate()?;
+        //.kis()?;
         //.dual()?;
-    */
 
     /*
     let conway = polyhedron::ConwayDescription::new()
@@ -46,20 +45,27 @@ pub fn main() -> Result<(), Box<dyn std::error::Error>> {
         .dual()?;
     */
 
+    /*
     let conway = polyhedron::ConwayDescription::new()
-        .seed(&platonic_solid::Octahedron2::new(1.0))?
-        .kis()?;
+        .seed(&platonic_solid::Octahedron2::new(1.0))?;
+        //.kis()?;
         //.dual()?;
+    */
 
     /*
     let conway = polyhedron::ConwayDescription::new()
-        .seed(&platonic_solid::Dodecahedron2::new(1.0))?
+        .seed(&platonic_solid::Dodecahedron2::new(1.0))?;
+        //.kis()?
         //.dual()?;
-     */
+        //.kis()?
+        //.kis()?;
+        //.dual()?;
+    */
 
     /*
     let conway = polyhedron::ConwayDescription::new()
         .seed(&platonic_solid::Icosahedron2::new(1.0))?
+        .kis()?
         .dual()?;
     */
 
